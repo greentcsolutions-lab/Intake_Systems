@@ -815,6 +815,7 @@
             <option value="25/50">25/50</option>
             <option value="50/100">50/100</option>
             <option value="100/300">100/300</option>
+            <option value="250/500">250/500</option>
           </select>
         </div>
         <div class="field">
@@ -824,6 +825,7 @@
             <option value="25/50">25/50</option>
             <option value="50/100">50/100</option>
             <option value="100/300">100/300</option>
+            <option value="250/500">250/500</option>
           </select>
         </div>
         <div class="field">
@@ -849,6 +851,7 @@
             <option>$50/day - $1,500 max</option>
           </select>
         </div>
+
       </div>
 
       <div id="comprehensive-collision-block">
@@ -1611,6 +1614,18 @@ function handleLienholder(n) {
   checkLienholderAlert();
 }
 
+function handleGlass(n) {
+  const comp = document.getElementById(`v${n}-comp`)?.value;
+  const glassField = document.getElementById(`v${n}-glass-field`);
+  if (!glassField) return;
+  const hasComp = comp && comp !== 'None' && comp !== '';
+  glassField.style.display = hasComp ? 'block' : 'none';
+  if (!hasComp) {
+    const glassEl = document.getElementById(`v${n}-glass`);
+    if (glassEl) glassEl.value = 'No';
+  }
+}
+
 function checkLienholderAlert() {
   let hasLien = false;
   for (let i = 1; i <= state.vehicleCount; i++) {
@@ -1645,10 +1660,17 @@ function refreshVehicleCovBlocks() {
       <div class="field-grid">
         <div class="field">
           <label>Comprehensive ${req}${flag}</label>
-          <select id="v${i}-comp">
+          <select id="v${i}-comp" onchange="handleGlass(${i})">
             <option value="">None</option>
             <option>$100 ded</option><option>$250 ded</option>
             <option>$500 ded</option><option>$1,000 ded</option>
+          </select>
+        </div>
+        <div class="field" id="v${i}-glass-field" style="display:none">
+          <label>Glass Coverage</label>
+          <select id="v${i}-glass">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field">
@@ -2085,6 +2107,7 @@ function collectAllData() {
       data[`${prefix} Ownership`] = val(`v${i}-ownership`);
       data[`${prefix} Lender`] = val(`v${i}-lender`);
       data[`${prefix} Comp`] = val(`v${i}-comp`);
+      data[`${prefix} Glass`] = val(`v${i}-glass`) || 'No';
       data[`${prefix} Coll`] = val(`v${i}-coll`);
       data[`${prefix} GAP`] = val(`v${i}-gap`);
     }
@@ -2104,6 +2127,7 @@ function collectAllData() {
     data['Auto UIM BI'] = val('auto-uimbi');
     data['Auto MedPay'] = val('auto-medpay');
     data['Auto Rental'] = val('auto-rental');
+
     data['Auto SR22'] = val('auto-sr22');
     data['Auto Rideshare'] = val('auto-rideshare');
   }
@@ -2412,6 +2436,7 @@ function buildPrintDocument() {
         ${row('Ownership', v(`v${i}-ownership`), isLien)}
         ${row('Lender', v(`v${i}-lender`))}
         ${row('Comp Deductible', v(`v${i}-comp`))}
+          ${row('Glass Coverage', v(`v${i}-glass`))}
         ${row('Coll Deductible', v(`v${i}-coll`))}
         ${row('GAP', v(`v${i}-gap`))}
       </div>`;
