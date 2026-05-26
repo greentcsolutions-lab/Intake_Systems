@@ -321,6 +321,15 @@
           <label>Property Address (if different)</label>
           <input type="text" id="home-addr" placeholder="Same as mailing if blank">
         </div>
+        <div class="field span2">
+          <label>Description of House <span class="flag">⚡ as described by insured</span></label>
+          <textarea id="home-description" placeholder="e.g. Two-story red brick colonial with white trim, black shutters, attached two-car garage on the left side. Large oak tree in front yard." style="min-height:60px"></textarea>
+        </div>
+        <div class="field span2">
+          <label>Directions to House <span class="flag">⚡ for field identification</span></label>
+          <textarea id="home-directions" placeholder="e.g. From Main St heading north, turn right on Elm Ave. Third house on the left past the stop sign." maxlength="1000" oninput="updateDirectionsCount(this)" style="min-height:80px"></textarea>
+          <div id="home-directions-count" style="font-size:11px;color:var(--muted);text-align:right;margin-top:3px">0 / 1000</div>
+        </div>
       </div>
 
       <div id="owner-fields">
@@ -637,32 +646,80 @@
           </select>
         </div>
         <div class="field">
-          <label>Jewelry / Scheduled Items</label>
-          <select id="home-jewelry" onchange="checkJewelry()">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Flood (separate NFIP)</label>
-          <select id="home-flood">
-            <option value="No">No</option><option value="Yes - Quote separately">Yes - Quote separately</option>
-          </select>
-        </div>
-        <div class="field">
           <label>Home Warranty?</label>
           <select id="home-warranty">
             <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
       </div>
-      <div id="jewelry-alert" class="alert alert-info hidden" style="margin-top:12px">
-        <div class="alert-icon">ℹ️</div>
-        <div><strong>Scheduled Personal Property</strong> Collect appraisal docs or receipts. List each item with value.</div>
+
+      <div class="section-divider"><span>Additional Coverages</span></div>
+      <div class="additional-cov-list">
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-earthquake" onchange="toggleAddCov('earthquake')">
+            <span>Earthquake</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-earthquake-detail">
+            <input type="text" id="home-addcov-earthquake-val" placeholder="Coverage amount / notes">
+          </div>
+        </div>
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-flood" onchange="toggleAddCov('flood')">
+            <span>Flood (NFIP / separate policy)</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-flood-detail">
+            <input type="text" id="home-addcov-flood-val" placeholder="Coverage amount / notes">
+          </div>
+        </div>
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-guns" onchange="toggleAddCov('guns')">
+            <span>Guns / Firearms</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-guns-detail">
+            <input type="text" id="home-addcov-guns-val" placeholder="Coverage amount / notes">
+          </div>
+        </div>
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-money" onchange="toggleAddCov('money')">
+            <span>Money / Securities</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-money-detail">
+            <input type="text" id="home-addcov-money-val" placeholder="Coverage amount / notes">
+          </div>
+        </div>
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-jewelry" onchange="toggleAddCov('jewelry')">
+            <span>Jewelry / Watches / Furs</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-jewelry-detail">
+            <input type="text" id="home-addcov-jewelry-val" placeholder="Coverage amount / notes — collect appraisals">
+          </div>
+        </div>
+        <div class="additional-cov-row">
+          <label class="addcov-check-label">
+            <input type="checkbox" id="home-addcov-collectibles" onchange="toggleAddCov('collectibles')">
+            <span>Collectibles / Fine Art</span>
+          </label>
+          <div class="addcov-detail hidden" id="home-addcov-collectibles-detail">
+            <input type="text" id="home-addcov-collectibles-val" placeholder="Coverage amount / notes">
+          </div>
+        </div>
       </div>
 
       <div class="section-divider"><span>Prior Losses (Home)</span></div>
       <div id="home-losses-container"></div>
       <button class="btn-add" onclick="addHomeLoss()">+ Add Prior Loss</button>
+
+      <div class="section-divider"><span>Agent Notes</span></div>
+      <div class="field">
+        <label>Notes <span class="flag">⚡ internal use — prints on PDF</span></label>
+        <textarea id="home-notes" placeholder="Any additional underwriting notes, special circumstances, or follow-up items for this property..." style="min-height:100px"></textarea>
+      </div>
     </div>
 
     <div class="btn-row">
