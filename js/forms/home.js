@@ -106,8 +106,24 @@ function handleHomeAlarm() {
   if (field) field.style.display = val && val !== 'No' ? 'block' : 'none';
 }
 function checkJewelry() {
-  document.getElementById('jewelry-alert')?.classList.toggle('hidden', document.getElementById('home-jewelry').value !== 'Yes');
+  // No-op: jewelry is now handled by the Additional Coverages checklist
 }
 function checkTobacco() {
   document.getElementById('tobacco-alert')?.classList.toggle('hidden', document.getElementById('life-tobacco').value !== 'Yes');
+}
+
+function toggleAddCov(key) {
+  const cb = document.getElementById(`home-addcov-${key}`);
+  const detail = document.getElementById(`home-addcov-${key}-detail`);
+  if (!cb || !detail) return;
+  detail.classList.toggle('hidden', !cb.checked);
+  if (!cb.checked) {
+    const input = document.getElementById(`home-addcov-${key}-val`);
+    if (input) input.value = '';
+  }
+}
+
+function updateDirectionsCount(el) {
+  const counter = document.getElementById('home-directions-count');
+  if (counter) counter.textContent = `${el.value.length} / 1000`;
 }

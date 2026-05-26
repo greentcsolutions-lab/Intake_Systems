@@ -73,6 +73,8 @@ function collectAllData() {
   // Home
   if (state.selectedLOBs.includes('home')) {
     data['Home Type'] = val('home-type');
+    data['Home Description'] = val('home-description');
+    data['Directions to House'] = val('home-directions');
     data['Purchase Date'] = val('home-purchase-date');
     data['Home Address'] = val('home-addr');
     data['Year Built'] = val('home-year');
@@ -99,6 +101,17 @@ function collectAllData() {
     data['Home Liability'] = val('home-cov-e');
     data['Home Deductible'] = val('home-ded');
     data['Water Backup'] = val('home-water-backup');
+    // Additional coverages
+    const addCovKeys = ['earthquake','flood','guns','money','jewelry','collectibles'];
+    const addCovLabels = {
+      earthquake: 'Earthquake', flood: 'Flood', guns: 'Guns/Firearms',
+      money: 'Money/Securities', jewelry: 'Jewelry', collectibles: 'Collectibles'
+    };
+    addCovKeys.forEach(k => {
+      const checked = document.getElementById(`home-addcov-${k}`)?.checked;
+      data[`AddCov ${addCovLabels[k]}`] = checked ? (val(`home-addcov-${k}-val`) || 'Yes') : 'No';
+    });
+    data['Home Notes'] = val('home-notes');
   }
 
   // Life

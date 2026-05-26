@@ -184,6 +184,8 @@ function buildPrintDocument() {
       ${row('Dog Breed', v('home-dog-breed'), !!v('home-dog-breed'))}
       ${row('Business on Premises', v('home-business'), v('home-business') === 'Yes')}
     </div>
+    ${v('home-description') ? `${subHeader('Description of House')}<div class="pd-full">${v('home-description')}</div>` : ''}
+    ${v('home-directions') ? `${subHeader('Directions to House')}<div class="pd-full">${v('home-directions')}</div>` : ''}
     ${subHeader('Safety & Security')}
     <div class="pd-grid">
       ${row('Smoke Detectors', v('home-smoke-detectors'))}
@@ -214,8 +216,18 @@ function buildPrintDocument() {
       ${row('All-Peril Deductible', v('home-ded'))}
       ${row('Wind/Hail Deductible', v('home-wind-ded'))}
       ${row('Water Backup', v('home-water-backup'))}
-      ${row('Scheduled Items', v('home-jewelry'))}
-      ${row('Flood (NFIP)', v('home-flood'))}
+    </div>
+    ${subHeader('Additional Coverages')}
+    <div class="pd-grid">
+      ${[
+        ['earthquake','Earthquake'],['flood','Flood (NFIP)'],['guns','Guns/Firearms'],
+        ['money','Money/Securities'],['jewelry','Jewelry'],['collectibles','Collectibles']
+      ].map(([k,label]) => {
+        const checked = document.getElementById(`home-addcov-${k}`)?.checked;
+        if (!checked) return row(label, 'No');
+        const detail = document.getElementById(`home-addcov-${k}-val`)?.value;
+        return row(label, detail ? `Yes — ${detail}` : 'Yes');
+      }).join('')}
     </div>`;
 
     // Prior losses
@@ -230,6 +242,9 @@ function buildPrintDocument() {
           ${row(`Loss ${i} Status`, v(`hl${i}-status`))}
         </div>`;
       }
+    }
+    if (v('home-notes')) {
+      html += `${subHeader('Agent Notes')}<div class="pd-full" style="white-space:pre-wrap">${v('home-notes')}</div>`;
     }
     html += `</div>`;
   }
