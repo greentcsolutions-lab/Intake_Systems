@@ -119,3 +119,95 @@ function updateDirectionsCount(el) {
   const counter = document.getElementById('home-directions-count');
   if (counter) counter.textContent = `${el.value.length} / 1000`;
 }
+// ══════════════════════════════════════════
+// ADDITIONAL INSUREDS
+// ══════════════════════════════════════════
+if (!window.additionalInsuredCount) window.additionalInsuredCount = 0;
+const MAX_ADDITIONAL_INSUREDS = 3;
+
+function handleAdditionalInsureds() {
+  const val = document.getElementById('additional-insureds-toggle')?.value;
+  const container = document.getElementById('additional-insureds-container');
+  const list = document.getElementById('additional-insureds-list');
+  const btn = document.getElementById('add-insured-btn');
+  if (!container || !list || !btn) return;
+
+  if (val === 'Yes') {
+    container.style.display = 'block';
+    if (list.children.length === 0) {
+      window.additionalInsuredCount = 0;
+      addAdditionalInsured();
+    }
+  } else {
+    container.style.display = 'none';
+    list.innerHTML = '';
+    window.additionalInsuredCount = 0;
+    btn.style.display = 'none';
+  }
+}
+
+function addAdditionalInsured() {
+  if (window.additionalInsuredCount >= MAX_ADDITIONAL_INSUREDS) return;
+  window.additionalInsuredCount++;
+  const n = window.additionalInsuredCount;
+  const list = document.getElementById('additional-insureds-list');
+  const div = document.createElement('div');
+  div.className = 'repeater-item';
+  div.id = `ai-${n}`;
+  div.innerHTML = `
+    <div class="repeater-header">
+      <div class="repeater-title">Additional Insured ${n}</div>
+      ${n > 1 ? `<button class="btn-remove" onclick="removeAdditionalInsured(${n})">Remove</button>` : ''}
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label>First Name <span class="req">*</span></label>
+        <input type="text" id="ai${n}-first" placeholder="Jane">
+      </div>
+      <div class="field">
+        <label>Last Name <span class="req">*</span></label>
+        <input type="text" id="ai${n}-last" placeholder="Smith">
+      </div>
+      <div class="field">
+        <label>Date of Birth <span class="req">*</span></label>
+        <input type="date" id="ai${n}-dob">
+      </div>
+      <div class="field">
+        <label>SSN / Last 4 <span class="flag">⚡ for rating</span></label>
+        <input type="text" id="ai${n}-ssn" placeholder="XXX-XX-1234" maxlength="11">
+      </div>
+      <div class="field">
+        <label>Phone</label>
+        <input type="tel" id="ai${n}-phone" placeholder="(555) 000-0000">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="ai${n}-email" placeholder="jane@email.com">
+      </div>
+      <div class="field">
+        <label>Relationship to Primary</label>
+        <select id="ai${n}-relationship">
+          <option value="">-- Select --</option>
+          <option>Spouse</option>
+          <option>Domestic Partner</option>
+          <option>Child</option>
+          <option>Parent</option>
+          <option>Sibling</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>`;
+  list.appendChild(div);
+
+  const btn = document.getElementById('add-insured-btn');
+  if (btn) {
+    btn.style.display = window.additionalInsuredCount < MAX_ADDITIONAL_INSUREDS ? 'block' : 'none';
+  }
+}
+
+function removeAdditionalInsured(n) {
+  document.getElementById(`ai-${n}`)?.remove();
+  window.additionalInsuredCount--;
+  const btn = document.getElementById('add-insured-btn');
+  if (btn) btn.style.display = window.additionalInsuredCount < MAX_ADDITIONAL_INSUREDS ? 'block' : 'none';
+}

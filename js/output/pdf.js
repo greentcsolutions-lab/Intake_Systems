@@ -94,6 +94,28 @@ function buildPrintDocument() {
     </div>
   </div>`;
 
+  // ── ADDITIONAL INSUREDS
+  if (document.getElementById('additional-insureds-toggle')?.value === 'Yes') {
+    const aiCount = window.additionalInsuredCount || 0;
+    if (aiCount > 0) {
+      html += `<div class="pd-section">${sectionHeader('Additional Insureds')}`;
+      for (let i = 1; i <= aiCount; i++) {
+        if (!document.getElementById(`ai${i}-first`)) continue;
+        html += `${subHeader(`Additional Insured ${i}`)}
+        <div class="pd-grid">
+          ${row('First Name', v(`ai${i}-first`))}
+          ${row('Last Name', v(`ai${i}-last`))}
+          ${row('Date of Birth', v(`ai${i}-dob`))}
+          ${row('SSN / Last 4', v(`ai${i}-ssn`))}
+          ${row('Phone', v(`ai${i}-phone`))}
+          ${row('Email', v(`ai${i}-email`))}
+          ${row('Relationship', v(`ai${i}-relationship`))}
+        </div>`;
+      }
+      html += `</div>`;
+    }
+  }
+
   // ── CURRENT COVERAGE (per LOB)
   if (lobs.length) {
     const carrierLabels = { auto: 'Auto', home: 'Home', life: 'Life' };

@@ -31,6 +31,22 @@ function collectAllData() {
     data[`${l} Current Premium`]    = val(`${lob}-carrier-premium`);
     data[`${l} Lapse Reason`]       = val(`${lob}-carrier-lapse`);
   });
+  // Additional Insureds
+  if (document.getElementById('additional-insureds-toggle')?.value === 'Yes') {
+    const aiCount = window.additionalInsuredCount || 0;
+    data['Additional Insureds Count'] = String(aiCount);
+    for (let i = 1; i <= aiCount; i++) {
+      if (!document.getElementById(`ai${i}-first`)) continue;
+      const prefix = `AI${i}`;
+      data[`${prefix} First Name`]    = val(`ai${i}-first`);
+      data[`${prefix} Last Name`]     = val(`ai${i}-last`);
+      data[`${prefix} DOB`]           = val(`ai${i}-dob`);
+      data[`${prefix} SSN/Last4`]     = val(`ai${i}-ssn`);
+      data[`${prefix} Phone`]         = val(`ai${i}-phone`);
+      data[`${prefix} Email`]         = val(`ai${i}-email`);
+      data[`${prefix} Relationship`]  = val(`ai${i}-relationship`);
+    }
+  }
   data['Lines of Business'] = state.selectedLOBs.join(', ');
   data['Submission Date'] = new Date().toLocaleDateString();
   data['Submission Time'] = new Date().toLocaleTimeString();
@@ -209,6 +225,16 @@ function buildReview() {
 
   const sections = [
     { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Lines of Business','Submission Date'] },
+    ...(() => {
+      if (document.getElementById('additional-insureds-toggle')?.value !== 'Yes') return [];
+      const count = window.additionalInsuredCount || 0;
+      const sections = [];
+      for (let i = 1; i <= count; i++) {
+        if (!document.getElementById(`ai${i}-first`)) continue;
+        sections.push({ title: `Additional Insured ${i}`, keys: [`AI${i} First Name`,`AI${i} Last Name`,`AI${i} DOB`,`AI${i} Phone`,`AI${i} Email`,`AI${i} Relationship`] });
+      }
+      return sections;
+    })(),
     ...state.selectedLOBs.map(lob => {
       const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
       return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`, `${l} Carrier Name`, `${l} Policy Number`, `${l} Expiration Date`, `${l} Current Premium`, `${l} Lapse Reason`] };
