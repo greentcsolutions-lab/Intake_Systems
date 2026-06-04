@@ -122,36 +122,8 @@
       </div>
 
       <div class="section-divider"><span>Current Coverage</span></div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Currently Insured?</label>
-          <select id="app-currently-insured" onchange="handleCurrentInsured()">
-            <option value="">-- Select --</option>
-            <option>Yes</option><option>No</option>
-          </select>
-        </div>
-        <div class="field" id="prior-carrier-field" style="display:none">
-          <label>Prior Carrier</label>
-          <input type="text" id="app-prior-carrier" placeholder="State Farm, etc.">
-        </div>
-        <div class="field" id="prior-expiry-field" style="display:none">
-          <label>Policy Expiration Date</label>
-          <input type="date" id="app-prior-expiry">
-        </div>
-        <div class="field" id="lapse-field" style="display:none">
-          <label>Reason for Lapse</label>
-          <select id="app-lapse-reason">
-            <option value="">-- Select --</option>
-            <option>Non-payment</option>
-            <option>Cancelled by carrier</option>
-            <option>Never had insurance</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-      <div id="lapse-alert" class="alert alert-warn hidden">
-        <div class="alert-icon">⚠️</div>
-        <div><strong>Coverage Lapse Flagged</strong>Most carriers will rate for lapse in coverage. Document reason and duration carefully.</div>
+      <div id="carrier-blocks-container">
+        <!-- Populated by renderCarrierBlocks() in state.js after LOB selection -->
       </div>
     </div>
     <div class="btn-row">

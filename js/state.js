@@ -50,6 +50,9 @@ function startIntake() {
   state.driverCount = 0;
   window.medCount = 0;
 
+  // Render per-LOB carrier blocks on the applicant page
+  renderCarrierBlocks(lobs);
+
   // Init with single vehicle and single driver
   addVehicle();
   addDriver();
@@ -57,6 +60,91 @@ function startIntake() {
   document.getElementById('step-lob').classList.add('hidden');
   buildStepNav();
   renderStep();
+}
+
+// ══════════════════════════════════════════
+// CARRIER BLOCKS (per LOB, on Applicant step)
+// ══════════════════════════════════════════
+const CARRIER_LOB_LABELS = {
+  auto: 'Auto',
+  home: 'Home',
+  life: 'Life',
+};
+
+function renderCarrierBlocks(lobs) {
+  const container = document.getElementById('carrier-blocks-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  lobs.forEach(lob => {
+    const label = CARRIER_LOB_LABELS[lob] || lob;
+    const id = `carrier-${lob}`;
+    const block = document.createElement('div');
+    block.className = 'repeater-item';
+    block.id = id;
+    block.style.marginBottom = '14px';
+    block.innerHTML = `
+      <div class="repeater-title" style="margin-bottom:14px">${label}</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Currently Insured?</label>
+          <select id="${lob}-currently-insured" onchange="handleCarrierInsured('${lob}')">
+            <option value="">-- Select --</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="field" id="${lob}-carrier-name-field" style="display:none">
+          <label>Carrier Name</label>
+          <input type="text" id="${lob}-carrier-name" placeholder="State Farm, Progressive, etc.">
+        </div>
+        <div class="field" id="${lob}-carrier-policy-field" style="display:none">
+          <label>Policy Number <span class="flag">⚡ if known</span></label>
+          <input type="text" id="${lob}-carrier-policy" placeholder="Optional">
+        </div>
+        <div class="field" id="${lob}-carrier-expiry-field" style="display:none">
+          <label>Expiration Date</label>
+          <input type="date" id="${lob}-carrier-expiry">
+        </div>
+        <div class="field" id="${lob}-carrier-premium-field" style="display:none">
+          <label>Current Premium</label>
+          <input type="text" id="${lob}-carrier-premium" placeholder="$1,200/yr">
+        </div>
+        <div class="field" id="${lob}-carrier-lapse-field" style="display:none">
+          <label>Reason for Lapse</label>
+          <select id="${lob}-carrier-lapse">
+            <option value="">-- Select --</option>
+            <option>Non-payment</option>
+            <option>Cancelled by carrier</option>
+            <option>Never had insurance</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div id="${lob}-carrier-lapse-alert" class="alert alert-warn hidden" style="margin-top:10px">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>${label} Coverage Lapse</strong> Most carriers will rate for lapse. Document reason and duration carefully.</div>
+      </div>`;
+    container.appendChild(block);
+  });
+}
+
+function handleCarrierInsured(lob) {
+  const val = document.getElementById(`${lob}-currently-insured`)?.value;
+  const isYes = val === 'Yes';
+  const isNo  = val === 'No';
+
+  const fields = ['carrier-name', 'carrier-policy', 'carrier-expiry', 'carrier-premium'];
+  fields.forEach(f => {
+    const el = document.getElementById(`${lob}-${f}-field`);
+    if (el) el.style.display = isYes ? 'block' : 'none';
+  });
+
+  const lapseField = document.getElementById(`${lob}-carrier-lapse-field`);
+  if (lapseField) lapseField.style.display = isNo ? 'block' : 'none';
+
+  const lapseAlert = document.getElementById(`${lob}-carrier-lapse-alert`);
+  if (lapseAlert) lapseAlert.classList.toggle('hidden', !isNo);
 }
 
 // ══════════════════════════════════════════

@@ -23,7 +23,12 @@ function buildPrintDocument() {
 
   // Collect flags (same logic as buildReview)
   const flags = [];
-  if (v('app-currently-insured') === 'No') flags.push('Coverage lapse — document reason');
+  state.selectedLOBs.forEach(lob => {
+    const label = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
+    if (v(`${lob}-currently-insured`) === 'No') {
+      flags.push(`${label} coverage lapse — document reason`);
+    }
+  });
   if (v('auto-sr22') === 'Yes') flags.push('SR-22 required — confirm carrier filing');
   if (v('auto-rideshare') === 'Yes') flags.push('Rideshare use — verify endorsement');
   for (let i = 1; i <= state.vehicleCount; i++) {
@@ -86,12 +91,31 @@ function buildPrintDocument() {
       ${row('City', v('app-city'))}
       ${row('State', v('app-state'))}
       ${row('ZIP', v('app-zip'))}
-      ${row('Currently Insured', v('app-currently-insured'), v('app-currently-insured') === 'No')}
-      ${row('Prior Carrier', v('app-prior-carrier'))}
-      ${row('Policy Expiration', v('app-prior-expiry'))}
-      ${row('Lapse Reason', v('app-lapse-reason'), !!v('app-lapse-reason'))}
     </div>
   </div>`;
+
+  // ── CURRENT COVERAGE (per LOB)
+  if (lobs.length) {
+    const carrierLabels = { auto: 'Auto', home: 'Home', life: 'Life' };
+    html += `<div class="pd-section">${sectionHeader('Current / Prior Coverage')}`;
+    html += `<div class="pd-grid">`;
+    lobs.forEach(lob => {
+      const label = carrierLabels[lob] || lob;
+      const insured  = v(`${lob}-currently-insured`);
+      const isLapse  = insured === 'No';
+      html += row(`${label} — Insured?`, insured, isLapse);
+      if (insured === 'Yes') {
+        html += row(`${label} — Carrier`,    v(`${lob}-carrier-name`));
+        html += row(`${label} — Policy #`,   v(`${lob}-carrier-policy`));
+        html += row(`${label} — Expiration`, v(`${lob}-carrier-expiry`));
+        html += row(`${label} — Premium`,    v(`${lob}-carrier-premium`));
+      }
+      if (isLapse) {
+        html += row(`${label} — Lapse Reason`, v(`${lob}-carrier-lapse`), true);
+      }
+    });
+    html += `</div></div>`;
+  }
 
   // ── PERSONAL AUTO
   if (lobs.includes('auto')) {

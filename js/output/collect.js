@@ -20,10 +20,17 @@ function collectAllData() {
   data['City'] = val('app-city');
   data['State'] = val('app-state');
   data['ZIP'] = val('app-zip');
-  data['Currently Insured'] = val('app-currently-insured');
-  data['Prior Carrier'] = val('app-prior-carrier');
-  data['Prior Expiry'] = val('app-prior-expiry');
-  data['Lapse Reason'] = val('app-lapse-reason');
+  // Per-LOB carrier info
+  const carrierLOBs = { auto: 'Auto', home: 'Home', life: 'Life' };
+  state.selectedLOBs.forEach(lob => {
+    const l = carrierLOBs[lob] || lob;
+    data[`${l} Currently Insured`]  = val(`${lob}-currently-insured`);
+    data[`${l} Carrier Name`]       = val(`${lob}-carrier-name`);
+    data[`${l} Policy Number`]      = val(`${lob}-carrier-policy`);
+    data[`${l} Expiration Date`]    = val(`${lob}-carrier-expiry`);
+    data[`${l} Current Premium`]    = val(`${lob}-carrier-premium`);
+    data[`${l} Lapse Reason`]       = val(`${lob}-carrier-lapse`);
+  });
   data['Lines of Business'] = state.selectedLOBs.join(', ');
   data['Submission Date'] = new Date().toLocaleDateString();
   data['Submission Time'] = new Date().toLocaleTimeString();
@@ -146,7 +153,12 @@ function buildReview() {
   const flags = [];
 
   // Detect flags
-  if (val('app-currently-insured') === 'No') flags.push('Coverage lapse — document reason');
+  state.selectedLOBs.forEach(lob => {
+    const label = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
+    if (val(`${lob}-currently-insured`) === 'No') {
+      flags.push(`${label} coverage lapse — document reason`);
+    }
+  });
   if (val('auto-sr22') === 'Yes') flags.push('SR-22 required — confirm carrier filing');
   if (val('auto-rideshare') === 'Yes') flags.push('Rideshare use — verify endorsement');
   for (let i = 1; i <= state.vehicleCount; i++) {
@@ -196,7 +208,11 @@ function buildReview() {
   sum.innerHTML = '';
 
   const sections = [
-    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Currently Insured','Prior Carrier','Prior Expiry','Lines of Business','Submission Date'] },
+    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Lines of Business','Submission Date'] },
+    ...state.selectedLOBs.map(lob => {
+      const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
+      return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`, `${l} Carrier Name`, `${l} Policy Number`, `${l} Expiration Date`, `${l} Current Premium`, `${l} Lapse Reason`] };
+    }),
     ...(state.selectedLOBs.includes('auto') ? [{ title: 'Personal Auto — Coverage', keys: ['Auto BI','Auto PD','Auto UM BI','Auto UIM BI','Auto MedPay','Auto Rental','Auto SR22','Auto Rideshare'] }] : []),
     ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Purchase Date','Year Built','Square Footage','Construction','Roof Type','Roof Year','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
     ...(state.selectedLOBs.includes('bop') ? [{ title: 'BOP', keys: ['Biz Name','Biz Revenue','Biz Employees','BOP GL','BOP Building','BOP BPP'] }] : []),

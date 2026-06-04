@@ -42,14 +42,6 @@ function removeItem(id) {
 // ══════════════════════════════════════════
 // CONDITIONAL ALERTS
 // ══════════════════════════════════════════
-function handleCurrentInsured() {
-  const val = document.getElementById('app-currently-insured').value;
-  document.getElementById('prior-carrier-field').style.display = val === 'Yes' ? 'block' : 'none';
-  document.getElementById('prior-expiry-field').style.display = val === 'Yes' ? 'block' : 'none';
-  document.getElementById('lapse-field').style.display = val === 'No' ? 'block' : 'none';
-  document.getElementById('lapse-alert').classList.toggle('hidden', val !== 'No');
-}
-
 function checkRideshare() {
   const v = document.getElementById('auto-rideshare')?.value;
   document.getElementById('rideshare-alert')?.classList.toggle('hidden', v !== 'Yes');
