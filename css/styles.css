@@ -507,6 +507,13 @@
   /* ── HIDDEN ── */
   .hidden { display: none !important; }
 
+  /* ── MED ROW LOCKED (PCP toggle) ── */
+  .med-locked {
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+  }
+
   /* ── PRINT ── */
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }

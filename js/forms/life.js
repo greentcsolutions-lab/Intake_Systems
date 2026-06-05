@@ -123,7 +123,36 @@ function addMedication() {
   c.appendChild(div);
 }
 
+function toggleMedPCP() {
+  const cb      = document.getElementById('med-pcp-toggle');
+  const alert   = document.getElementById('med-pcp-alert');
+  const addBtn  = document.getElementById('med-add-btn');
+  const container = document.getElementById('medications-container');
+  if (!cb) return;
+  const locked = cb.checked;
+
+  // Show/hide alert
+  if (alert) alert.classList.toggle('hidden', !locked);
+
+  // Disable/enable Add button
+  if (addBtn) {
+    addBtn.disabled = locked;
+    addBtn.style.opacity = locked ? '0.4' : '1';
+    addBtn.style.cursor  = locked ? 'not-allowed' : 'pointer';
+  }
+
+  // Gray out / restore all existing med rows
+  container?.querySelectorAll('.repeater-item').forEach(row => {
+    row.classList.toggle('med-locked', locked);
+    row.querySelectorAll('input, select, button').forEach(el => {
+      el.disabled = locked;
+    });
+  });
+}
+
 function collectMedications() {
+  // If PCP toggle is active, suppress all med rows from output
+  if (document.getElementById('med-pcp-toggle')?.checked) return [];
   if (!window.medCount) return [];
   const meds = [];
   for (let i = 1; i <= window.medCount; i++) {

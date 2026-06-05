@@ -73,7 +73,7 @@
           <input type="date" id="app-dob">
         </div>
         <div class="field">
-          <label>SSN / Last 4 <span class="flag">⚡ for rating</span></label>
+          <label>SSN / Last 4 <span class="flag">⚡ for credit pull</span></label>
           <input type="text" id="app-ssn" placeholder="XXX-XX-1234" maxlength="11">
         </div>
         <div class="field">
@@ -84,21 +84,6 @@
           <label>Email</label>
           <input type="email" id="app-email" placeholder="jane@email.com">
         </div>
-      </div>
-
-      <div class="section-divider"><span>Additional Insureds</span></div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Additional Insureds?</label>
-          <select id="additional-insureds-toggle" onchange="handleAdditionalInsureds()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
-          </select>
-        </div>
-      </div>
-      <div id="additional-insureds-container" style="display:none;margin-top:14px">
-        <div id="additional-insureds-list"></div>
-        <button class="btn-add" id="add-insured-btn" onclick="addAdditionalInsured()" style="display:none">+ Add Another Insured</button>
       </div>
 
       <div class="section-divider"><span>Mailing Address</span></div>
@@ -783,8 +768,16 @@
           <div class="alert-icon">ℹ️</div>
           <div><strong>Medications Required</strong> List all current prescriptions including dosage and frequency. Required for underwriting on health and Medicare products.</div>
         </div>
+        <label class="check-chip" id="med-pcp-chip" style="margin-bottom:14px;display:inline-flex" onclick="this.classList.toggle('selected');document.getElementById('med-pcp-toggle').checked=this.classList.contains('selected');toggleMedPCP()">
+          <input type="checkbox" id="med-pcp-toggle">
+          <span>📋 Medication List Provided by PCP / Pharmacist</span>
+        </label>
+        <div id="med-pcp-alert" class="alert alert-warn hidden" style="margin-bottom:14px">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>Add PCP / Pharmacist Contact info to Notes</strong> — name, practice, and phone number.</div>
+        </div>
         <div id="medications-container"></div>
-        <button class="btn-add" onclick="addMedication()">+ Add Medication</button>
+        <button class="btn-add" id="med-add-btn" onclick="addMedication()">+ Add Medication</button>
       </div>
       <div class="section-divider"><span>Notes</span></div>
       <div class="field">
