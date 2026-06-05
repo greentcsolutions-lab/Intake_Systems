@@ -68,7 +68,7 @@ function startIntake() {
 const CARRIER_LOB_LABELS = {
   auto: 'Auto',
   home: 'Home',
-  life: 'Life',
+  life: 'Life/Health',
 };
 
 function renderCarrierBlocks(lobs) {
@@ -112,7 +112,7 @@ function renderCarrierBlocks(lobs) {
         </div>
         <div class="field" id="${lob}-carrier-lapse-field" style="display:none">
           <label>Reason for Lapse</label>
-          <select id="${lob}-carrier-lapse">
+          <select id="${lob}-carrier-lapse" onchange="handleCarrierLapse('${lob}')">
             <option value="">-- Select --</option>
             <option>Non-payment</option>
             <option>Cancelled by carrier</option>
@@ -143,8 +143,24 @@ function handleCarrierInsured(lob) {
   const lapseField = document.getElementById(`${lob}-carrier-lapse-field`);
   if (lapseField) lapseField.style.display = isNo ? 'block' : 'none';
 
-  const lapseAlert = document.getElementById(`${lob}-carrier-lapse-alert`);
-  if (lapseAlert) lapseAlert.classList.toggle('hidden', !isNo);
+  // Reset lapse reason when toggling away from No
+  if (!isNo) {
+    const lapseEl = document.getElementById(`${lob}-carrier-lapse`);
+    if (lapseEl) lapseEl.value = '';
+  }
+
+  handleCarrierLapse(lob);
+}
+
+function handleCarrierLapse(lob) {
+  const insured = document.getElementById(`${lob}-currently-insured`)?.value;
+  const lapse   = document.getElementById(`${lob}-carrier-lapse`)?.value;
+  const alert   = document.getElementById(`${lob}-carrier-lapse-alert`);
+  if (!alert) return;
+
+  const isNo        = insured === 'No';
+  const isNewCustomer = lapse === 'Never had insurance';
+  alert.classList.toggle('hidden', !isNo || isNewCustomer);
 }
 
 // ══════════════════════════════════════════
@@ -157,7 +173,7 @@ function buildStepNav() {
     applicant: 'Applicant',
     auto: '🚗 Auto',
     home: '🏠 Home',
-    life: '❤️ Life',
+    life: '❤️ Life / Health',
     review: '✅ Review',
   };
   state.steps.forEach((s, i) => {
