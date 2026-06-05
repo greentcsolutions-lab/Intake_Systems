@@ -768,8 +768,8 @@
           <div class="alert-icon">ℹ️</div>
           <div><strong>Medications Required</strong> List all current prescriptions including dosage and frequency. Required for underwriting on health and Medicare products.</div>
         </div>
-        <label class="check-chip" id="med-pcp-chip" style="margin-bottom:14px;display:inline-flex" onclick="this.classList.toggle('selected');document.getElementById('med-pcp-toggle').checked=this.classList.contains('selected');toggleMedPCP()">
-          <input type="checkbox" id="med-pcp-toggle">
+        <label class="check-chip" id="med-pcp-chip" style="margin-bottom:14px;display:inline-flex">
+          <input type="checkbox" id="med-pcp-toggle" onchange="document.getElementById('med-pcp-chip').classList.toggle('selected',this.checked);toggleMedPCP()">
           <span>📋 Medication List Provided by PCP / Pharmacist</span>
         </label>
         <div id="med-pcp-alert" class="alert alert-warn hidden" style="margin-bottom:14px">
