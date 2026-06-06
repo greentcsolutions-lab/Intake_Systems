@@ -61,13 +61,32 @@ const COMMON_MEDICATIONS = [
 
 const MED_OPTIONS_HTML = COMMON_MEDICATIONS.map(m => `<option value="${m}">${m}</option>`).join('');
 
+const LIFE_PRODUCTS  = ['Term Life', 'Whole Life', 'Universal Life', 'Final Expense'];
+const HEALTH_PRODUCTS = ['Health / ACA', 'Medicare Supplement', 'Medicare Advantage', 'Dental / Vision'];
+
 function handleLifeType() {
   const type = document.getElementById('life-type')?.value;
-  const block = document.getElementById('life-meds-block');
-  if (!block) return;
+
+  const isLife   = LIFE_PRODUCTS.includes(type);
+  const isHealth = HEALTH_PRODUCTS.includes(type);
+  const isTerm   = type === 'Term Life';
   const needsMeds = MED_TYPES_REQUIRING_MEDS.includes(type);
-  block.style.display = needsMeds ? 'block' : 'none';
-  // Auto-add first medication row if opening for first time
+
+  // Life-only fields
+  const lifeGroup = document.getElementById('life-fields-group');
+  if (lifeGroup) lifeGroup.style.display = isLife ? 'block' : 'none';
+
+  // Term length — only for Term Life
+  const termField = document.getElementById('life-term-field');
+  if (termField) termField.style.display = isTerm ? 'block' : 'none';
+
+  // Shared fields (height/weight/tobacco/conditions/notes) — both Life and Health
+  const sharedGroup = document.getElementById('life-shared-group');
+  if (sharedGroup) sharedGroup.style.display = (isLife || isHealth) ? 'block' : 'none';
+
+  // Medications block — Health only, specific products
+  const medsBlock = document.getElementById('life-meds-block');
+  if (medsBlock) medsBlock.style.display = needsMeds ? 'block' : 'none';
   if (needsMeds && document.getElementById('medications-container').children.length === 0) {
     addMedication();
   }
