@@ -1,4 +1,79 @@
 // ══════════════════════════════════════════
+// STEP VALIDATION
+// ══════════════════════════════════════════
+function validateStep() {
+  const key = state.steps[state.currentStepIndex];
+  const panelId = key === 'applicant' ? 'step-applicant' :
+                  key === 'review'    ? 'step-review'    :
+                  (typeof LOB_META !== 'undefined' && LOB_META[key]?.step) || `step-${key}`;
+  const panel = document.getElementById(panelId);
+  if (!panel) return true;
+
+  // Only validate the applicant step for now
+  if (key !== 'applicant') return true;
+
+  // Clear prior errors
+  panel.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+  panel.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  const oldBanner = panel.querySelector('.validation-banner');
+  if (oldBanner) oldBanner.remove();
+
+  const errors = [];
+
+  // Find every label that contains a .req span
+  panel.querySelectorAll('label').forEach(label => {
+    if (!label.querySelector('.req')) return;
+
+    // Extract clean label text (text nodes only, strip child element text)
+    const labelText = Array.from(label.childNodes)
+      .filter(n => n.nodeType === Node.TEXT_NODE)
+      .map(n => n.textContent.trim())
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+
+    // Find associated input/select/textarea inside the same .field div
+    const fieldDiv = label.closest('.field');
+    if (!fieldDiv) return;
+
+    const input = fieldDiv.querySelector('input, select, textarea');
+    if (!input) return;
+
+    // Skip fields hidden by a hidden ancestor
+    if (input.offsetParent === null) return;
+
+    if (!input.value.trim()) {
+      errors.push({ labelText, fieldDiv, input });
+    }
+  });
+
+  if (errors.length === 0) return true;
+
+  // Inline errors — red border + message below each field
+  errors.forEach(({ fieldDiv, labelText }) => {
+    fieldDiv.classList.add('field-error');
+    const msg = document.createElement('div');
+    msg.className = 'field-error-msg';
+    msg.textContent = `${labelText} is required`;
+    fieldDiv.appendChild(msg);
+  });
+
+  // Banner at top of first card
+  const firstCard = panel.querySelector('.card');
+  if (firstCard) {
+    const banner = document.createElement('div');
+    banner.className = 'validation-banner';
+    banner.innerHTML = `<strong>Please complete all required fields before continuing:</strong><ul>${
+      errors.map(e => `<li>${e.labelText}</li>`).join('')
+    }</ul>`;
+    firstCard.insertBefore(banner, firstCard.firstChild);
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  return false;
+}
+
+// ══════════════════════════════════════════
 // COLLECT DATA
 // ══════════════════════════════════════════
 function val(id) {
@@ -148,29 +223,38 @@ function collectAllData() {
 }
 
 // ══════════════════════════════════════════
-// BUILD REVIEW
+// COMPUTE FLAGS  (single source of truth)
+// Called by both buildReview() and buildPrintDocument()
 // ══════════════════════════════════════════
-function buildReview() {
-  const data = collectAllData();
+function computeFlags() {
   const flags = [];
 
-  // Detect flags
+  // Coverage lapses (per LOB)
+  const lobLabels = { auto: 'Auto', home: 'Home', life: 'Life' };
   state.selectedLOBs.forEach(lob => {
-    const label = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
+    const label = lobLabels[lob] || lob;
     if (val(`${lob}-currently-insured`) === 'No') {
       flags.push(`${label} coverage lapse — document reason`);
     }
   });
+
+  // Auto — policy-level
   if (val('auto-sr22') === 'Yes') flags.push('SR-22 required — confirm carrier filing');
   if (val('auto-rideshare') === 'Yes') flags.push('Rideshare use — verify endorsement');
+
+  // Auto — per vehicle
   for (let i = 1; i <= state.vehicleCount; i++) {
+    if (!document.getElementById(`v${i}-year`)) continue;
     const own = val(`v${i}-ownership`);
     if (own === 'Financed' || own === 'Leased') {
       const vLabel = [val(`v${i}-year`), val(`v${i}-make`), val(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`;
       flags.push(`${vLabel}: Lienholder — Comp/Coll required`);
     }
   }
+
+  // Auto — per driver
   for (let i = 1; i <= state.driverCount; i++) {
+    if (!document.getElementById(`d${i}-first`)) continue;
     const acc = parseInt(val(`d${i}-accidents`));
     const vio = parseInt(val(`d${i}-violations`));
     const dui = val(`d${i}-dui`);
@@ -178,16 +262,29 @@ function buildReview() {
       flags.push(`${val(`d${i}-first`) || `Driver ${i}`}: Incident history flagged`);
     }
   }
+
+  // Home
   if (val('home-pool') === 'Yes - Unfenced') flags.push('Unfenced pool — liability risk');
   if (val('home-knob-tube') === 'Yes') flags.push('Knob & tube wiring — verify eligibility');
   if (val('home-fuse') === 'Yes') flags.push('Fuse box — some carriers restrict');
   if (val('home-dog') === 'Yes') flags.push(`Dog on premises (${val('home-dog-breed') || 'breed unknown'}) — check restricted breed list`);
-  if (val('life-tobacco') === 'Yes') flags.push('Tobacco use — smoker rates apply');
-
   const roofYr = parseInt(val('home-roof-year'));
   if (!isNaN(roofYr) && (new Date().getFullYear() - roofYr) >= 15) {
     flags.push('Roof age 15+ years — may require inspection');
   }
+
+  // Life
+  if (val('life-tobacco') === 'Yes') flags.push('Tobacco use — smoker rates apply');
+
+  return flags;
+}
+
+// ══════════════════════════════════════════
+// BUILD REVIEW
+// ══════════════════════════════════════════
+function buildReview() {
+  const data = collectAllData();
+  const flags = computeFlags();
 
   const flagsDiv = document.getElementById('flags-container');
   if (flags.length) {
