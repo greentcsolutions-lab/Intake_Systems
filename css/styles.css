@@ -616,3 +616,36 @@
     .output-grid { grid-template-columns: 1fr; }
     .card { padding: 20px 16px; }
   }
+  /* ── VALIDATION ── */
+  .field-error input,
+  .field-error select,
+  .field-error textarea {
+    border-color: var(--red) !important;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.10);
+  }
+  .field-error-msg {
+    font-size: 11px;
+    color: var(--red);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .validation-banner {
+    background: #fdeaea;
+    border: 1px solid #f0a0a0;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #8a1a1a;
+    margin-bottom: 20px;
+  }
+  .validation-banner strong {
+    display: block;
+    margin-bottom: 6px;
+  }
+  .validation-banner ul {
+    margin: 0;
+    padding-left: 18px;
+  }
+  .validation-banner ul li {
+    margin-bottom: 3px;
+  }
