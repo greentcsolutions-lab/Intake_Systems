@@ -9,9 +9,6 @@ function validateStep() {
   const panel = document.getElementById(panelId);
   if (!panel) return true;
 
-  // Only validate the applicant step for now
-  if (key !== 'applicant') return true;
-
   // Clear prior errors
   panel.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
   panel.querySelectorAll('.field-error-msg').forEach(el => el.remove());
@@ -20,45 +17,90 @@ function validateStep() {
 
   const errors = [];
 
-  // Find every label that contains a .req span
-  panel.querySelectorAll('label').forEach(label => {
-    if (!label.querySelector('.req')) return;
-
-    // Extract clean label text (text nodes only, strip child element text)
-    const labelText = Array.from(label.childNodes)
-      .filter(n => n.nodeType === Node.TEXT_NODE)
-      .map(n => n.textContent.trim())
-      .filter(Boolean)
-      .join(' ')
-      .trim();
-
-    // Find associated input/select/textarea inside the same .field div
-    const fieldDiv = label.closest('.field');
-    if (!fieldDiv) return;
-
-    const input = fieldDiv.querySelector('input, select, textarea');
+  // ── helper: flag a field invalid by element ID ──
+  function flagById(id, labelText) {
+    const input = document.getElementById(id);
     if (!input) return;
-
-    // Skip fields hidden by a hidden ancestor
-    if (input.offsetParent === null) return;
-
+    if (input.offsetParent === null) return; // hidden ancestor
     if (!input.value.trim()) {
-      errors.push({ labelText, fieldDiv, input });
+      const fieldDiv = input.closest('.field');
+      if (fieldDiv && !errors.find(e => e.fieldDiv === fieldDiv)) {
+        errors.push({ labelText, fieldDiv });
+      }
     }
-  });
+  }
+
+  // ── helper: scan a container for * labels (static fields) ──
+  function scanContainer(container) {
+    container.querySelectorAll('label').forEach(label => {
+      if (!label.querySelector('.req')) return;
+      const labelText = Array.from(label.childNodes)
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent.trim())
+        .filter(Boolean)
+        .join(' ')
+        .trim();
+      const fieldDiv = label.closest('.field');
+      if (!fieldDiv) return;
+      const input = fieldDiv.querySelector('input, select, textarea');
+      if (!input) return;
+      if (input.offsetParent === null) return;
+      if (!input.value.trim()) {
+        if (!errors.find(e => e.fieldDiv === fieldDiv)) {
+          errors.push({ labelText, fieldDiv });
+        }
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════
+  // APPLICANT
+  // ══════════════════════════════════════════
+  if (key === 'applicant') {
+    scanContainer(panel);
+  }
+
+  // ══════════════════════════════════════════
+  // AUTO
+  // ══════════════════════════════════════════
+  else if (key === 'auto') {
+    // Per-vehicle: Year, Make, Model required (have * markers via addVehicle)
+    // Comp & Coll required when Financed or Leased
+    for (let i = 1; i <= state.vehicleCount; i++) {
+      if (!document.getElementById(`v${i}-year`)) continue;
+      flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
+      flagById(`v${i}-make`,  `Vehicle ${i} — Make`);
+      flagById(`v${i}-model`, `Vehicle ${i} — Model`);
+      const ownership = document.getElementById(`v${i}-ownership`)?.value;
+      if (ownership === 'Financed' || ownership === 'Leased') {
+        const vLabel = [
+          document.getElementById(`v${i}-year`)?.value,
+          document.getElementById(`v${i}-make`)?.value,
+          document.getElementById(`v${i}-model`)?.value,
+        ].filter(Boolean).join(' ') || `Vehicle ${i}`;
+        flagById(`v${i}-comp`, `${vLabel} — Comprehensive (lender required)`);
+        flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
+      }
+    }
+    // Static * fields: BI Liability, Property Damage
+    scanContainer(panel);
+  }
 
   if (errors.length === 0) return true;
 
-  // Inline errors — red border + message below each field
+  // ── Inline errors ──
   errors.forEach(({ fieldDiv, labelText }) => {
+    if (!fieldDiv) return;
     fieldDiv.classList.add('field-error');
-    const msg = document.createElement('div');
-    msg.className = 'field-error-msg';
-    msg.textContent = `${labelText} is required`;
-    fieldDiv.appendChild(msg);
+    if (!fieldDiv.querySelector('.field-error-msg')) {
+      const msg = document.createElement('div');
+      msg.className = 'field-error-msg';
+      msg.textContent = `${labelText} is required`;
+      fieldDiv.appendChild(msg);
+    }
   });
 
-  // Banner at top of first card
+  // ── Banner ──
   const firstCard = panel.querySelector('.card');
   if (firstCard) {
     const banner = document.createElement('div');
