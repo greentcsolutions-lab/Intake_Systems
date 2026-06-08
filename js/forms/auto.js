@@ -14,9 +14,9 @@ function addVehicle() {
       ${n > 1 ? `<button class="btn-remove" onclick="removeItem('vehicle-${n}')">Remove</button>` : ''}
     </div>
     <div class="field-grid three">
-      <div class="field"><label>Year</label><input type="number" id="v${n}-year" placeholder="2020" min="1950" max="2026" onchange="refreshVehicleCovBlocks()"></div>
-      <div class="field"><label>Make</label><input type="text" id="v${n}-make" placeholder="Toyota"></div>
-      <div class="field"><label>Model</label><input type="text" id="v${n}-model" placeholder="Camry"></div>
+      <div class="field"><label>Year <span class="req">*</span></label><input type="number" id="v${n}-year" placeholder="2020" min="1950" max="2026" onchange="refreshVehicleCovBlocks()"></div>
+      <div class="field"><label>Make <span class="req">*</span></label><input type="text" id="v${n}-make" placeholder="Toyota"></div>
+      <div class="field"><label>Model <span class="req">*</span></label><input type="text" id="v${n}-model" placeholder="Camry"></div>
       <div class="field"><label>VIN</label><input type="text" id="v${n}-vin" placeholder="1HGBH41JXMN109186"></div>
       <div class="field"><label>Garaging ZIP</label><input type="text" id="v${n}-zip" placeholder="65000" maxlength="5"></div>
       <div class="field"><label>Primary Use</label>
