@@ -48,7 +48,7 @@ function checkRideshare() {
 }
 
 document.getElementById('auto-sr22')?.addEventListener('change', function() {
-  document.getElementById('sr22-reason-field').style.display = this.value === 'Yes' ? 'block' : 'none';
+  document.getElementById('sr22-reason-field')?.style && (document.getElementById('sr22-reason-field').style.display = this.value === 'Yes' ? 'block' : 'none');
   document.getElementById('sr22-alert')?.classList.toggle('hidden', this.value !== 'Yes');
 });
 
@@ -121,34 +121,40 @@ function updateDirectionsCount(el) {
 }
 
 // ══════════════════════════════════════════
-// MEDICARE TOGGLES (life.js handlers)
+// MEDICARE TOGGLES
 // ══════════════════════════════════════════
 function handleMedicareAB() {
   const val = document.getElementById('life-medicare-ab')?.value;
   const isYes = val === 'Yes';
-  document.getElementById('life-medicare-parta-field').style.display = isYes ? 'block' : 'none';
-  document.getElementById('life-medicare-partb-field').style.display = isYes ? 'block' : 'none';
+  const partA = document.getElementById('life-medicare-parta-field');
+  const partB = document.getElementById('life-medicare-partb-field');
+  if (partA) partA.style.display = isYes ? 'block' : 'none';
+  if (partB) partB.style.display = isYes ? 'block' : 'none';
 }
 
 function handleMedicaid() {
   const val = document.getElementById('life-medicaid')?.value;
-  document.getElementById('life-medicaid-num-field').style.display = val === 'Yes' ? 'block' : 'none';
+  const el = document.getElementById('life-medicaid-num-field');
+  if (el) el.style.display = val === 'Yes' ? 'block' : 'none';
 }
 
 function handleLIS() {
   const val = document.getElementById('life-lis')?.value;
-  document.getElementById('life-lis-level-field').style.display = val === 'Yes' ? 'block' : 'none';
+  const el = document.getElementById('life-lis-level-field');
+  if (el) el.style.display = val === 'Yes' ? 'block' : 'none';
 }
 
 function handlePartD() {
   const val = document.getElementById('life-partd')?.value;
-  document.getElementById('life-partd-company-field').style.display = val === 'Yes' ? 'block' : 'none';
+  const el = document.getElementById('life-partd-company-field');
+  if (el) el.style.display = val === 'Yes' ? 'block' : 'none';
 }
 
 function handleGroupCov() {
   const val = document.getElementById('life-group-cov')?.value;
   const isYes = val === 'Yes';
   ['life-group-company-field', 'life-group-policy-field', 'life-group-term-field'].forEach(id => {
-    document.getElementById(id).style.display = isYes ? 'block' : 'none';
+    const el = document.getElementById(id);
+    if (el) el.style.display = isYes ? 'block' : 'none';
   });
 }
