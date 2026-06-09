@@ -209,9 +209,9 @@ function refreshVehicleCovBlocks() {
 }
 
 // ══════════════════════════════════════════
-// DRIVER REPEATER
+// HOUSEHOLD MEMBER REPEATER
 // ══════════════════════════════════════════
-function addDriver() {
+function addHouseholdMember() {
   state.driverCount++;
   const n = state.driverCount;
   const c = document.getElementById('drivers-container');
@@ -220,7 +220,7 @@ function addDriver() {
   div.id = `driver-${n}`;
   div.innerHTML = `
     <div class="repeater-header">
-      <div class="repeater-title">Driver ${n}</div>
+      <div class="repeater-title">Household Member ${n}</div>
       ${n > 1 ? `<button class="btn-remove" onclick="removeItem('driver-${n}')">Remove</button>` : ''}
     </div>
     <div class="field-grid three">
@@ -271,7 +271,7 @@ function addDriver() {
     </div>
     <div id="d${n}-history-alert" class="alert alert-warn hidden" style="margin-top:10px">
       <div class="alert-icon">⚠️</div>
-      <div><strong>Driver History Flag</strong> This driver has incidents that will affect rating. Verify details and check carrier eligibility guidelines.</div>
+      <div><strong>Incident History Flag</strong> This household member has incidents that will affect rating. Verify details and check carrier eligibility guidelines.</div>
     </div>
     <div id="d${n}-age-alert" class="alert alert-warn hidden" style="margin-top:10px">
       <div class="alert-icon">⚠️</div>
@@ -279,19 +279,18 @@ function addDriver() {
     </div>`;
   c.appendChild(div);
 
-  // Auto-populate Driver 1 from applicant page
+  // Auto-populate Member 1 from applicant fields
   if (n === 1) {
-    const fields = {
+    const fieldMap = {
       'd1-first': 'app-first',
       'd1-last':  'app-last',
       'd1-dob':   'app-dob',
     };
-    for (const [driverId, appId] of Object.entries(fields)) {
-      const appVal = document.getElementById(appId)?.value;
-      const driverEl = document.getElementById(driverId);
-      if (appVal && driverEl) driverEl.value = appVal;
+    for (const [memberId, appId] of Object.entries(fieldMap)) {
+      const appEl    = document.getElementById(appId);
+      const memberEl = document.getElementById(memberId);
+      if (appEl && memberEl && appEl.value) memberEl.value = appEl.value;
     }
-    // Lock relationship to Self for Driver 1
     const relEl = document.getElementById('d1-rel');
     if (relEl) relEl.value = 'Self';
   }
