@@ -136,20 +136,52 @@
     </div>
   </div>
 
-  <!-- PERSONAL AUTO -->
-<div id="step-auto" class="step-panel hidden">
+  <!-- PERSONAL AUTO: VEHICLES -->
+<div id="step-auto-vehicles" class="step-panel hidden">
     <div class="card">
-      <div class="card-title">🚗 Personal Auto</div>
-      <div class="card-desc">Add all vehicles. Coverage questions will appear based on your entries.</div>
+      <div class="card-title">🚗 Vehicles</div>
+      <div class="card-desc">Add all vehicles to be insured. Include year, make, model, and ownership details.</div>
 
       <div id="vehicles-container"></div>
       <button class="btn-add" onclick="addVehicle()">+ Add Vehicle</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+    </div>
+  </div>
 
-      <div class="section-divider"><span>Drivers</span></div>
+  <!-- PERSONAL AUTO: DRIVERS -->
+<div id="step-auto-drivers" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">🚗 Drivers</div>
+      <div class="card-desc">List all licensed drivers in the household. Driver 1 is pre-filled from applicant info.</div>
+
       <div id="drivers-container"></div>
       <button class="btn-add" onclick="addDriver()">+ Add Driver</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+    </div>
+  </div>
 
-      <div class="section-divider"><span>Coverage Selections</span></div>
+  <!-- PERSONAL AUTO: COVERAGE -->
+<div id="step-auto-coverage" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">🚗 Auto Coverage</div>
+      <div class="card-desc">Select liability limits and physical damage coverage for each vehicle.</div>
+
+      <div class="section-divider"><span>Physical Damage</span></div>
+      <div id="comprehensive-collision-block">
+        <div id="comp-coll-alert" class="alert alert-warn hidden">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>Lienholder / Lease Detected</strong> Comprehensive and Collision coverage are <strong>required</strong> by lenders. Deductibles must be within lender guidelines (typically $500 max).</div>
+        </div>
+        <div id="vehicles-cov-container"></div>
+      </div>
+
+      <div class="section-divider"><span>Liability &amp; Additional Coverage</span></div>
       <div class="field-grid">
         <div class="field">
           <label>Bodily Injury Liability <span class="req">*</span></label>
@@ -209,15 +241,6 @@
             <option>$50/day - $1,500 max</option>
           </select>
         </div>
-
-      </div>
-
-      <div id="comprehensive-collision-block">
-        <div id="comp-coll-alert" class="alert alert-warn hidden">
-          <div class="alert-icon">⚠️</div>
-          <div><strong>Lienholder / Lease Detected</strong> Comprehensive and Collision coverage are <strong>required</strong> by lenders. Deductibles must be within lender guidelines (typically $500 max).</div>
-        </div>
-        <div id="vehicles-cov-container"></div>
       </div>
 
       <div class="section-divider"><span>Additional Questions</span></div>
