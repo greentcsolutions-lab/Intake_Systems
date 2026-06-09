@@ -11,7 +11,6 @@ const state = {
 };
 
 const LOB_META = {
-  auto: { label: 'Personal Auto', step: 'step-auto' },
   home: { label: 'Home/Renters', step: 'step-home' },
   life: { label: 'Life/Health', step: 'step-life' },
 };
@@ -36,8 +35,17 @@ function startIntake() {
   if (!lobs.length) { alert('Please select at least one line of business.'); return; }
   state.selectedLOBs = lobs;
 
-  // Build step order
-  state.steps = ['applicant', ...lobs, 'review'];
+  // Build step order — auto expands into three focused screens
+  const steps = ['applicant'];
+  lobs.forEach(lob => {
+    if (lob === 'auto') {
+      steps.push('auto-vehicles', 'auto-drivers', 'auto-coverage');
+    } else {
+      steps.push(lob);
+    }
+  });
+  steps.push('review');
+  state.steps = steps;
   state.currentStepIndex = 0;
 
   // Reset repeater containers and counts before init
@@ -171,7 +179,9 @@ function buildStepNav() {
   nav.innerHTML = '';
   const labels = {
     applicant: 'Applicant',
-    auto: '🚗 Auto',
+    'auto-vehicles': '🚗 Vehicles',
+    'auto-drivers': '🚗 Drivers',
+    'auto-coverage': '🚗 Coverage',
     home: '🏠 Home',
     life: '❤️ Life / Health',
     review: '✅ Review',
@@ -190,10 +200,22 @@ function renderStep() {
   document.querySelectorAll('.step-panel').forEach(p => p.classList.add('hidden'));
 
   const key = state.steps[state.currentStepIndex];
-  const panelId = key === 'applicant' ? 'step-applicant' :
-                  key === 'review' ? 'step-review' :
-                  LOB_META[key]?.step || `step-${key}`;
+
+  const panelMap = {
+    'applicant':     'step-applicant',
+    'auto-vehicles': 'step-auto-vehicles',
+    'auto-drivers':  'step-auto-drivers',
+    'auto-coverage': 'step-auto-coverage',
+    'review':        'step-review',
+  };
+  const panelId = panelMap[key] || LOB_META[key]?.step || `step-${key}`;
   document.getElementById(panelId)?.classList.remove('hidden');
+
+  // When entering the coverage screen, rebuild physical damage blocks
+  // so vehicle labels (Year Make Model) are current
+  if (key === 'auto-coverage') {
+    refreshVehicleCovBlocks();
+  }
 
   // Progress
   const pct = Math.round(((state.currentStepIndex + 1) / state.steps.length) * 100);
@@ -210,11 +232,13 @@ function renderStep() {
 
 function getStepLabel(key) {
   const labels = {
-    applicant: 'Applicant Info',
-    auto: 'Personal Auto',
-    home: 'Home / Renters',
-    life: 'Life / Health',
-    review: 'Review & Export',
+    applicant:       'Applicant Info',
+    'auto-vehicles': 'Vehicles',
+    'auto-drivers':  'Drivers',
+    'auto-coverage': 'Auto Coverage',
+    home:            'Home / Renters',
+    life:            'Life / Health',
+    review:          'Review & Export',
   };
   return labels[key] || key;
 }
