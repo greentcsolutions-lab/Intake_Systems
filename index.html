@@ -84,6 +84,10 @@
           <label>Email</label>
           <input type="email" id="app-email" placeholder="jane@email.com">
         </div>
+        <div class="field">
+          <label>Referred By</label>
+          <input type="text" id="app-referred-by" placeholder="Name or source of referral">
+        </div>
       </div>
 
       <div class="section-divider"><span>Mailing Address</span></div>
@@ -798,6 +802,199 @@
         <div class="field">
           <label>Additional Notes</label>
           <textarea id="life-notes" placeholder="Any additional health history, medications, etc."></textarea>
+        </div>
+      </div>
+
+      <!-- Medicare sub-section — shown for Medicare Supplement, Medicare Advantage, Health/ACA -->
+      <div id="life-medicare-group" style="display:none">
+        <div class="section-divider"><span>Medicare Details</span></div>
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Medicare Part A &amp; B?</label>
+            <select id="life-medicare-ab" onchange="handleMedicareAB()">
+              <option value="">-- Select --</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field" id="life-medicare-parta-field" style="display:none">
+            <label>Part A Effective Date</label>
+            <input type="date" id="life-medicare-parta">
+          </div>
+          <div class="field" id="life-medicare-partb-field" style="display:none">
+            <label>Part B Effective Date</label>
+            <input type="date" id="life-medicare-partb">
+          </div>
+          <div class="field">
+            <label>Medicare Claim #</label>
+            <input type="text" id="life-medicare-claim" placeholder="1EG4-TE5-MK72">
+          </div>
+        </div>
+
+        <div class="field-grid" style="margin-top:12px">
+          <div class="field">
+            <label>VA Coverage?</label>
+            <select id="life-va">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Medicaid?</label>
+            <select id="life-medicaid" onchange="handleMedicaid()">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field" id="life-medicaid-num-field" style="display:none">
+            <label>Medicaid #</label>
+            <input type="text" id="life-medicaid-num" placeholder="Medicaid ID number">
+          </div>
+          <div class="field">
+            <label>Extra Help / LIS?</label>
+            <select id="life-lis" onchange="handleLIS()">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field" id="life-lis-level-field" style="display:none">
+            <label>LIS Level</label>
+            <select id="life-lis-level">
+              <option value="">-- Select --</option>
+              <option>Level 1</option>
+              <option>Level 2</option>
+              <option>Level 3</option>
+              <option>Level 4</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Mail Order Pharmacy?</label>
+            <select id="life-mail-order">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid" style="margin-top:12px">
+          <div class="field">
+            <label>Preferred Pharmacy</label>
+            <input type="text" id="life-pharmacy" placeholder="e.g. Walgreens, CVS, Walmart">
+          </div>
+          <div class="field">
+            <label>Preferred Hospital</label>
+            <input type="text" id="life-hospital" placeholder="e.g. Mercy, Cox, OHC, TCMH, Baxter">
+          </div>
+          <div class="field">
+            <label>PCP Name</label>
+            <input type="text" id="life-pcp-name" placeholder="Dr. Jane Smith">
+          </div>
+          <div class="field">
+            <label>PCP Office Location</label>
+            <input type="text" id="life-pcp-location" placeholder="Practice name or city">
+          </div>
+          <div class="field">
+            <label>Specialist</label>
+            <input type="text" id="life-specialist" placeholder="Cardiologist, Oncologist, etc.">
+          </div>
+        </div>
+
+        <!-- Current plan details — varies by product type -->
+        <div id="life-current-supp-block" style="display:none">
+          <div class="section-divider"><span>Current Medicare Supplement</span></div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Current Company</label>
+              <input type="text" id="life-supp-company" placeholder="Aetna, Mutual of Omaha, etc.">
+            </div>
+            <div class="field">
+              <label>Plan Type</label>
+              <select id="life-supp-plan-type">
+                <option value="">-- Select --</option>
+                <option>Plan A</option><option>Plan B</option><option>Plan C</option>
+                <option>Plan D</option><option>Plan F</option><option>Plan G</option>
+                <option>Plan G-HD</option><option>Plan K</option><option>Plan L</option>
+                <option>Plan M</option><option>Plan N</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Current Premium</label>
+              <input type="text" id="life-supp-premium" placeholder="$150/mo">
+            </div>
+            <div class="field">
+              <label>Renewal Date</label>
+              <input type="date" id="life-supp-renewal">
+            </div>
+          </div>
+        </div>
+
+        <div id="life-current-adv-block" style="display:none">
+          <div class="section-divider"><span>Current Medicare Advantage</span></div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Current Company</label>
+              <input type="text" id="life-adv-company" placeholder="Humana, UnitedHealthcare, etc.">
+            </div>
+            <div class="field">
+              <label>Plan Name</label>
+              <input type="text" id="life-adv-plan" placeholder="e.g. Gold Plus HMO">
+            </div>
+          </div>
+        </div>
+
+        <div id="life-current-aca-block" style="display:none">
+          <div class="section-divider"><span>Current Health / ACA Plan</span></div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Current Company</label>
+              <input type="text" id="life-aca-company" placeholder="BCBS, Ambetter, etc.">
+            </div>
+            <div class="field">
+              <label>Policy #</label>
+              <input type="text" id="life-aca-policy" placeholder="Policy number">
+            </div>
+          </div>
+        </div>
+
+        <!-- Prescription Plan -->
+        <div class="section-divider"><span>Prescription / Part D</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Prescription Plan (Part D)?</label>
+            <select id="life-partd" onchange="handlePartD()">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field" id="life-partd-company-field" style="display:none">
+            <label>Part D Company</label>
+            <input type="text" id="life-partd-company" placeholder="SilverScript, Humana, etc.">
+          </div>
+        </div>
+
+        <!-- Group Coverage -->
+        <div class="section-divider"><span>Group / Other Coverage</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Group Coverage?</label>
+            <select id="life-group-cov" onchange="handleGroupCov()">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field" id="life-group-company-field" style="display:none">
+            <label>Group Company</label>
+            <input type="text" id="life-group-company" placeholder="Employer / union plan">
+          </div>
+          <div class="field" id="life-group-policy-field" style="display:none">
+            <label>Group Policy #</label>
+            <input type="text" id="life-group-policy" placeholder="Policy number">
+          </div>
+          <div class="field" id="life-group-term-field" style="display:none">
+            <label>Termination Date</label>
+            <input type="date" id="life-group-term">
+          </div>
         </div>
       </div>
     </div>
