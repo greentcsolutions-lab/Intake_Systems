@@ -125,6 +125,20 @@
         </div>
       </div>
 
+      <div class="section-divider"><span>Household Members</span></div>
+      <div class="alert alert-info" style="margin-bottom:14px">
+        <div class="alert-icon">ℹ️</div>
+        <div><strong>List all household members age 16 or older.</strong> This information is used for auto rating and home underwriting. All licensed drivers must be listed.</div>
+      </div>
+      <div class="field-grid" style="margin-bottom:14px">
+        <div class="field">
+          <label>Total Household Members (all ages)</label>
+          <input type="number" id="app-household-total" placeholder="e.g. 4" min="1">
+        </div>
+      </div>
+      <div id="drivers-container"></div>
+      <button class="btn-add" onclick="addHouseholdMember()">+ Add Household Member</button>
+
       <div class="section-divider"><span>Current Coverage</span></div>
       <div id="carrier-blocks-container">
         <!-- Populated by renderCarrierBlocks() in state.js after LOB selection -->
@@ -144,21 +158,6 @@
 
       <div id="vehicles-container"></div>
       <button class="btn-add" onclick="addVehicle()">+ Add Vehicle</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
-      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
-    </div>
-  </div>
-
-  <!-- PERSONAL AUTO: DRIVERS -->
-<div id="step-auto-drivers" class="step-panel hidden">
-    <div class="card">
-      <div class="card-title">🚗 Drivers</div>
-      <div class="card-desc">List all licensed drivers in the household. Driver 1 is pre-filled from applicant info.</div>
-
-      <div id="drivers-container"></div>
-      <button class="btn-add" onclick="addDriver()">+ Add Driver</button>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
