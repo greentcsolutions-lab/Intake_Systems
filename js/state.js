@@ -39,7 +39,7 @@ function startIntake() {
   const steps = ['applicant'];
   lobs.forEach(lob => {
     if (lob === 'auto') {
-      steps.push('auto-vehicles', 'auto-drivers', 'auto-coverage');
+      steps.push('auto-vehicles', 'auto-coverage');
     } else {
       steps.push(lob);
     }
@@ -61,9 +61,9 @@ function startIntake() {
   // Render per-LOB carrier blocks on the applicant page
   renderCarrierBlocks(lobs);
 
-  // Init with single vehicle and single driver
+  // Init with single vehicle and single household member
   addVehicle();
-  addDriver();
+  addHouseholdMember();
 
   document.getElementById('step-lob').classList.add('hidden');
   buildStepNav();
@@ -178,7 +178,7 @@ function buildStepNav() {
   const nav = document.getElementById('stepNav');
   nav.innerHTML = '';
 
-  const AUTO_STEPS = ['auto-vehicles', 'auto-drivers', 'auto-coverage'];
+  const AUTO_STEPS = ['auto-vehicles', 'auto-coverage'];
 
   const pillLabels = {
     applicant: 'Applicant',
@@ -229,7 +229,6 @@ function renderStep() {
   const panelMap = {
     'applicant':     'step-applicant',
     'auto-vehicles': 'step-auto-vehicles',
-    'auto-drivers':  'step-auto-drivers',
     'auto-coverage': 'step-auto-coverage',
     'review':        'step-review',
   };
@@ -240,21 +239,6 @@ function renderStep() {
   // so vehicle labels (Year Make Model) are current
   if (key === 'auto-coverage') {
     refreshVehicleCovBlocks();
-  }
-
-  // When entering the drivers screen, sync Driver 1 from applicant fields
-  // (data is now filled in; this is more reliable than doing it at addDriver() time)
-  if (key === 'auto-drivers') {
-    const fields = {
-      'd1-first': 'app-first',
-      'd1-last':  'app-last',
-      'd1-dob':   'app-dob',
-    };
-    for (const [driverId, appId] of Object.entries(fields)) {
-      const appEl    = document.getElementById(appId);
-      const driverEl = document.getElementById(driverId);
-      if (appEl && driverEl && appEl.value) driverEl.value = appEl.value;
-    }
   }
 
   // Progress
@@ -274,7 +258,6 @@ function getStepLabel(key) {
   const labels = {
     applicant:       'Applicant Info',
     'auto-vehicles': 'Vehicles',
-    'auto-drivers':  'Drivers',
     'auto-coverage': 'Auto Coverage',
     home:            'Home / Renters',
     life:            'Life / Health',
