@@ -133,6 +133,7 @@ function collectAllData() {
   data['SSN/Last4'] = val('app-ssn');
   data['Phone'] = val('app-phone');
   data['Email'] = val('app-email');
+  data['Referred By'] = val('app-referred-by');
   data['Address'] = val('app-addr1');
   data['City'] = val('app-city');
   data['State'] = val('app-state');
@@ -259,6 +260,48 @@ function collectAllData() {
       data[`Med${n} Condition`] = m.condition;
       data[`Med${n} Duration`] = m.duration;
     });
+
+    // Medicare-specific fields
+    const type = val('life-type');
+    const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(type);
+    if (isMedicare) {
+      data['Medicare Part A & B']       = val('life-medicare-ab');
+      data['Medicare Part A Eff Date']  = val('life-medicare-parta');
+      data['Medicare Part B Eff Date']  = val('life-medicare-partb');
+      data['Medicare Claim #']          = val('life-medicare-claim');
+      data['VA Coverage']               = val('life-va');
+      data['Medicaid']                  = val('life-medicaid');
+      data['Medicaid #']                = val('life-medicaid-num');
+      data['Extra Help / LIS']          = val('life-lis');
+      data['LIS Level']                 = val('life-lis-level');
+      data['Mail Order Pharmacy']       = val('life-mail-order');
+      data['Preferred Pharmacy']        = val('life-pharmacy');
+      data['Preferred Hospital']        = val('life-hospital');
+      data['PCP Name']                  = val('life-pcp-name');
+      data['PCP Office Location']       = val('life-pcp-location');
+      data['Specialist']                = val('life-specialist');
+      data['Part D Plan']               = val('life-partd');
+      data['Part D Company']            = val('life-partd-company');
+      data['Group Coverage']            = val('life-group-cov');
+      data['Group Company']             = val('life-group-company');
+      data['Group Policy #']            = val('life-group-policy');
+      data['Group Termination Date']    = val('life-group-term');
+
+      if (type === 'Medicare Supplement') {
+        data['Supp Current Company']  = val('life-supp-company');
+        data['Supp Plan Type']        = val('life-supp-plan-type');
+        data['Supp Current Premium']  = val('life-supp-premium');
+        data['Supp Renewal Date']     = val('life-supp-renewal');
+      }
+      if (type === 'Medicare Advantage') {
+        data['Adv Current Company']   = val('life-adv-company');
+        data['Adv Plan Name']         = val('life-adv-plan');
+      }
+      if (type === 'Health / ACA') {
+        data['ACA Current Company']   = val('life-aca-company');
+        data['ACA Policy #']          = val('life-aca-policy');
+      }
+    }
   }
 
   return data;
@@ -349,7 +392,7 @@ function buildReview() {
   sum.innerHTML = '';
 
   const sections = [
-    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Lines of Business','Submission Date'] },
+    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Lines of Business','Submission Date'] },
     ...state.selectedLOBs.map(lob => {
       const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
       return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`, `${l} Carrier Name`, `${l} Policy Number`, `${l} Expiration Date`, `${l} Current Premium`, `${l} Lapse Reason`] };
@@ -357,7 +400,23 @@ function buildReview() {
     ...(state.selectedLOBs.includes('auto') ? [{ title: 'Personal Auto — Coverage', keys: ['Auto BI','Auto PD','Auto UM BI','Auto UIM BI','Auto MedPay','Auto Rental','Auto SR22','Auto Rideshare'] }] : []),
     ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Purchase Date','Year Built','Square Footage','Construction','Roof Type','Roof Year','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
     ...(state.selectedLOBs.includes('bop') ? [{ title: 'BOP', keys: ['Biz Name','Biz Revenue','Biz Employees','BOP GL','BOP Building','BOP BPP'] }] : []),
-    ...(state.selectedLOBs.includes('life') ? [{ title: 'Life / Health', keys: ['Life Product','Life Amount','Life Term','Beneficiary','Tobacco','Medical Conditions'] }] : []),
+    ...(state.selectedLOBs.includes('life') ? (() => {
+      const type = val('life-type');
+      const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(type);
+      const secs = [{ title: 'Life / Health', keys: ['Life Product','Life Amount','Life Term','Beneficiary','Tobacco','Medical Conditions'] }];
+      if (isMedicare) {
+        secs.push({ title: 'Medicare Details', keys: [
+          'Medicare Part A & B','Medicare Part A Eff Date','Medicare Part B Eff Date','Medicare Claim #',
+          'VA Coverage','Medicaid','Medicaid #','Extra Help / LIS','LIS Level',
+          'Mail Order Pharmacy','Preferred Pharmacy','Preferred Hospital',
+          'PCP Name','PCP Office Location','Specialist',
+          'Part D Plan','Part D Company','Group Coverage','Group Company','Group Policy #','Group Termination Date',
+          'Supp Current Company','Supp Plan Type','Supp Current Premium','Supp Renewal Date',
+          'Adv Current Company','Adv Plan Name','ACA Current Company','ACA Policy #',
+        ]});
+      }
+      return secs;
+    })() : []),
   ];
 
   sections.forEach(sec => {

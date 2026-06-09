@@ -21,38 +21,7 @@ function buildPrintDocument() {
   const v = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const lobs = state.selectedLOBs;
 
-  // Collect flags (same logic as buildReview)
-  const flags = [];
-  state.selectedLOBs.forEach(lob => {
-    const label = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
-    if (v(`${lob}-currently-insured`) === 'No') {
-      flags.push(`${label} coverage lapse — document reason`);
-    }
-  });
-  if (v('auto-sr22') === 'Yes') flags.push('SR-22 required — confirm carrier filing');
-  if (v('auto-rideshare') === 'Yes') flags.push('Rideshare use — verify endorsement');
-  for (let i = 1; i <= state.vehicleCount; i++) {
-    const own = v(`v${i}-ownership`);
-    if (own === 'Financed' || own === 'Leased') {
-      const label = [v(`v${i}-year`), v(`v${i}-make`), v(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`;
-      flags.push(`${label}: Lienholder — Comp/Coll required`);
-    }
-  }
-  for (let i = 1; i <= state.driverCount; i++) {
-    const acc = parseInt(v(`d${i}-accidents`));
-    const vio = parseInt(v(`d${i}-violations`));
-    const dui = v(`d${i}-dui`);
-    if (acc > 0 || vio > 0 || dui === 'Yes') {
-      flags.push(`${v(`d${i}-first`) || `Driver ${i}`}: Incident history flagged`);
-    }
-  }
-  if (v('home-pool') === 'Yes - Unfenced') flags.push('Unfenced pool — liability risk');
-  if (v('home-knob-tube') === 'Yes') flags.push('Knob & tube wiring — verify eligibility');
-  if (v('home-fuse') === 'Yes') flags.push('Fuse box — some carriers restrict');
-  if (v('home-dog') === 'Yes') flags.push(`Dog on premises (${v('home-dog-breed') || 'breed unknown'}) — check restricted breed list`);
-  if (v('life-tobacco') === 'Yes') flags.push('Tobacco use — smoker rates apply');
-  const roofYr = parseInt(v('home-roof-year'));
-  if (!isNaN(roofYr) && (new Date().getFullYear() - roofYr) >= 15) flags.push('Roof age 15+ years — may require inspection');
+  const flags = computeFlags();
 
   // ── HEADER
   let html = `
@@ -87,6 +56,7 @@ function buildPrintDocument() {
       ${row('SSN / Last 4', v('app-ssn'))}
       ${row('Phone', v('app-phone'))}
       ${row('Email', v('app-email'))}
+      ${row('Referred By', v('app-referred-by'))}
       ${row('Address', v('app-addr1'))}
       ${row('City', v('app-city'))}
       ${row('State', v('app-state'))}
@@ -275,6 +245,9 @@ function buildPrintDocument() {
 
   // ── LIFE / HEALTH
   if (lobs.includes('life')) {
+    const lifeType = v('life-type');
+    const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(lifeType);
+
     html += `<div class="pd-section">${sectionHeader('❤️  Life / Health', true)}
     <div class="pd-grid">
       ${row('Product Type', v('life-type'))}
@@ -286,6 +259,68 @@ function buildPrintDocument() {
       ${row('Tobacco Use', v('life-tobacco'), v('life-tobacco') === 'Yes')}
       ${row('Medical Conditions', v('life-conditions'), v('life-conditions') !== 'None' && v('life-conditions') !== '')}
     </div>`;
+
+    // Medicare details block
+    if (isMedicare) {
+      html += `${subHeader('Medicare Details')}
+      <div class="pd-grid">
+        ${row('Medicare Part A & B', v('life-medicare-ab'))}
+        ${row('Part A Effective Date', v('life-medicare-parta'))}
+        ${row('Part B Effective Date', v('life-medicare-partb'))}
+        ${row('Medicare Claim #', v('life-medicare-claim'))}
+        ${row('VA Coverage', v('life-va'))}
+        ${row('Medicaid', v('life-medicaid'))}
+        ${row('Medicaid #', v('life-medicaid-num'))}
+        ${row('Extra Help / LIS', v('life-lis'))}
+        ${row('LIS Level', v('life-lis-level'))}
+        ${row('Mail Order Pharmacy', v('life-mail-order'))}
+        ${row('Preferred Pharmacy', v('life-pharmacy'))}
+        ${row('Preferred Hospital', v('life-hospital'))}
+        ${row('PCP Name', v('life-pcp-name'))}
+        ${row('PCP Office Location', v('life-pcp-location'))}
+        ${row('Specialist', v('life-specialist'))}
+      </div>`;
+
+      // Current plan details — by product type
+      if (lifeType === 'Medicare Supplement') {
+        html += `${subHeader('Current Medicare Supplement')}
+        <div class="pd-grid">
+          ${row('Current Company', v('life-supp-company'))}
+          ${row('Plan Type', v('life-supp-plan-type'))}
+          ${row('Current Premium', v('life-supp-premium'))}
+          ${row('Renewal Date', v('life-supp-renewal'))}
+        </div>`;
+      }
+      if (lifeType === 'Medicare Advantage') {
+        html += `${subHeader('Current Medicare Advantage')}
+        <div class="pd-grid">
+          ${row('Current Company', v('life-adv-company'))}
+          ${row('Plan Name', v('life-adv-plan'))}
+        </div>`;
+      }
+      if (lifeType === 'Health / ACA') {
+        html += `${subHeader('Current Health / ACA Plan')}
+        <div class="pd-grid">
+          ${row('Current Company', v('life-aca-company'))}
+          ${row('Policy #', v('life-aca-policy'))}
+        </div>`;
+      }
+
+      // Part D + Group coverage
+      html += `${subHeader('Prescription / Part D')}
+      <div class="pd-grid">
+        ${row('Part D Plan', v('life-partd'))}
+        ${row('Part D Company', v('life-partd-company'))}
+      </div>
+      ${subHeader('Group / Other Coverage')}
+      <div class="pd-grid">
+        ${row('Group Coverage', v('life-group-cov'))}
+        ${row('Group Company', v('life-group-company'))}
+        ${row('Group Policy #', v('life-group-policy'))}
+        ${row('Termination Date', v('life-group-term'))}
+      </div>`;
+    }
+
     const meds = collectMedications();
     const pcpToggled = document.getElementById('med-pcp-toggle')?.checked;
     if (pcpToggled) {
