@@ -64,13 +64,16 @@ const MED_OPTIONS_HTML = COMMON_MEDICATIONS.map(m => `<option value="${m}">${m}<
 const LIFE_PRODUCTS  = ['Term Life', 'Whole Life', 'Universal Life', 'Final Expense'];
 const HEALTH_PRODUCTS = ['Health / ACA', 'Medicare Supplement', 'Medicare Advantage', 'Dental / Vision'];
 
+const MEDICARE_PRODUCTS = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'];
+
 function handleLifeType() {
   const type = document.getElementById('life-type')?.value;
 
-  const isLife   = LIFE_PRODUCTS.includes(type);
-  const isHealth = HEALTH_PRODUCTS.includes(type);
-  const isTerm   = type === 'Term Life';
-  const needsMeds = MED_TYPES_REQUIRING_MEDS.includes(type);
+  const isLife      = LIFE_PRODUCTS.includes(type);
+  const isHealth    = HEALTH_PRODUCTS.includes(type);
+  const isTerm      = type === 'Term Life';
+  const needsMeds   = MED_TYPES_REQUIRING_MEDS.includes(type);
+  const isMedicare  = MEDICARE_PRODUCTS.includes(type);
 
   // Life-only fields
   const lifeGroup = document.getElementById('life-fields-group');
@@ -90,6 +93,18 @@ function handleLifeType() {
   if (needsMeds && document.getElementById('medications-container').children.length === 0) {
     addMedication();
   }
+
+  // Medicare sub-section
+  const medicareGroup = document.getElementById('life-medicare-group');
+  if (medicareGroup) medicareGroup.style.display = isMedicare ? 'block' : 'none';
+
+  // Current plan detail blocks — mutually exclusive
+  const suppBlock = document.getElementById('life-current-supp-block');
+  const advBlock  = document.getElementById('life-current-adv-block');
+  const acaBlock  = document.getElementById('life-current-aca-block');
+  if (suppBlock) suppBlock.style.display = type === 'Medicare Supplement' ? 'block' : 'none';
+  if (advBlock)  advBlock.style.display  = type === 'Medicare Advantage'  ? 'block' : 'none';
+  if (acaBlock)  acaBlock.style.display  = type === 'Health / ACA'        ? 'block' : 'none';
 }
 
 function addMedication() {
