@@ -81,13 +81,6 @@ function validateStep() {
   }
 
   // ══════════════════════════════════════════
-  // AUTO — DRIVERS
-  // ══════════════════════════════════════════
-  else if (key === 'auto-drivers') {
-    // No required fields on drivers — pass through
-  }
-
-  // ══════════════════════════════════════════
   // AUTO — COVERAGE
   // ══════════════════════════════════════════
   else if (key === 'auto-coverage') {
@@ -183,6 +176,7 @@ function collectAllData() {
   data['Phone'] = val('app-phone');
   data['Email'] = val('app-email');
   data['Referred By'] = val('app-referred-by');
+  data['Total Household Members'] = val('app-household-total');
   data['Address'] = val('app-addr1');
   data['City'] = val('app-city');
   data['State'] = val('app-state');

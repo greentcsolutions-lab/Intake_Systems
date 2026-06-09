@@ -57,6 +57,7 @@ function buildPrintDocument() {
       ${row('Phone', v('app-phone'))}
       ${row('Email', v('app-email'))}
       ${row('Referred By', v('app-referred-by'))}
+      ${row('Total Household Members', v('app-household-total'))}
       ${row('Address', v('app-addr1'))}
       ${row('City', v('app-city'))}
       ${row('State', v('app-state'))}
@@ -114,12 +115,12 @@ function buildPrintDocument() {
       </div>`;
     }
 
-    // Drivers
+    // Household Members
     for (let i = 1; i <= state.driverCount; i++) {
       if (!document.getElementById(`d${i}-first`)) continue;
-      const name = [v(`d${i}-first`), v(`d${i}-last`)].filter(Boolean).join(' ') || `Driver ${i}`;
+      const name = [v(`d${i}-first`), v(`d${i}-last`)].filter(Boolean).join(' ') || `Member ${i}`;
       const hasIncident = parseInt(v(`d${i}-accidents`)) > 0 || parseInt(v(`d${i}-violations`)) > 0 || v(`d${i}-dui`) === 'Yes';
-      html += `${subHeader(`Driver ${i} — ${name}`)}
+      html += `${subHeader(`Household Member ${i} — ${name}`)}
       <div class="pd-grid">
         ${row('Date of Birth', v(`d${i}-dob`))}
         ${row('License #', v(`d${i}-lic`))}
