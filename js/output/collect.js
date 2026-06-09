@@ -3,9 +3,17 @@
 // ══════════════════════════════════════════
 function validateStep() {
   const key = state.steps[state.currentStepIndex];
-  const panelId = key === 'applicant' ? 'step-applicant' :
-                  key === 'review'    ? 'step-review'    :
-                  (typeof LOB_META !== 'undefined' && LOB_META[key]?.step) || `step-${key}`;
+
+  const panelMap = {
+    'applicant':     'step-applicant',
+    'auto-vehicles': 'step-auto-vehicles',
+    'auto-drivers':  'step-auto-drivers',
+    'auto-coverage': 'step-auto-coverage',
+    'review':        'step-review',
+  };
+  const panelId = panelMap[key] ||
+    (typeof LOB_META !== 'undefined' && LOB_META[key]?.step) ||
+    `step-${key}`;
   const panel = document.getElementById(panelId);
   if (!panel) return true;
 
@@ -61,7 +69,48 @@ function validateStep() {
   }
 
   // ══════════════════════════════════════════
-  // AUTO
+  // AUTO — VEHICLES
+  // ══════════════════════════════════════════
+  else if (key === 'auto-vehicles') {
+    for (let i = 1; i <= state.vehicleCount; i++) {
+      if (!document.getElementById(`v${i}-year`)) continue;
+      flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
+      flagById(`v${i}-make`,  `Vehicle ${i} — Make`);
+      flagById(`v${i}-model`, `Vehicle ${i} — Model`);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // AUTO — DRIVERS
+  // ══════════════════════════════════════════
+  else if (key === 'auto-drivers') {
+    // No required fields on drivers — pass through
+  }
+
+  // ══════════════════════════════════════════
+  // AUTO — COVERAGE
+  // ══════════════════════════════════════════
+  else if (key === 'auto-coverage') {
+    // Comp & Coll required when Financed or Leased
+    for (let i = 1; i <= state.vehicleCount; i++) {
+      if (!document.getElementById(`v${i}-year`)) continue;
+      const ownership = document.getElementById(`v${i}-ownership`)?.value;
+      if (ownership === 'Financed' || ownership === 'Leased') {
+        const vLabel = [
+          document.getElementById(`v${i}-year`)?.value,
+          document.getElementById(`v${i}-make`)?.value,
+          document.getElementById(`v${i}-model`)?.value,
+        ].filter(Boolean).join(' ') || `Vehicle ${i}`;
+        flagById(`v${i}-comp`, `${vLabel} — Comprehensive (lender required)`);
+        flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
+      }
+    }
+    // Static * fields: BI, PD, UM BI
+    scanContainer(panel);
+  }
+
+  // ══════════════════════════════════════════
+  // AUTO (legacy single-panel fallback)
   // ══════════════════════════════════════════
   else if (key === 'auto') {
     // Per-vehicle: Year, Make, Model required (have * markers via addVehicle)
