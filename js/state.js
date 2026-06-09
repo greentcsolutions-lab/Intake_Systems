@@ -177,21 +177,46 @@ function handleCarrierLapse(lob) {
 function buildStepNav() {
   const nav = document.getElementById('stepNav');
   nav.innerHTML = '';
-  const labels = {
+
+  const AUTO_STEPS = ['auto-vehicles', 'auto-drivers', 'auto-coverage'];
+
+  const pillLabels = {
     applicant: 'Applicant',
-    'auto-vehicles': '🚗 Vehicles',
-    'auto-drivers': '🚗 Drivers',
-    'auto-coverage': '🚗 Coverage',
-    home: '🏠 Home',
-    life: '❤️ Life / Health',
-    review: '✅ Review',
+    auto:      '🚗 Auto',
+    home:      '🏠 Home',
+    life:      '❤️ Life / Health',
+    review:    '✅ Review',
   };
+
+  // Build a de-duplicated pill list — auto sub-steps collapse into one 'auto' pill
+  const pills = []; // { label, firstIndex, lastIndex }
   state.steps.forEach((s, i) => {
-    const pill = document.createElement('div');
-    pill.className = 'step-pill' + (i === state.currentStepIndex ? ' active' : '');
-    pill.textContent = labels[s] || s;
-    pill.onclick = () => { if (i < state.currentStepIndex) { state.currentStepIndex = i; renderStep(); } };
-    nav.appendChild(pill);
+    const group = AUTO_STEPS.includes(s) ? 'auto' : s;
+    const last = pills[pills.length - 1];
+    if (last && last.group === group) {
+      last.lastIndex = i;
+    } else {
+      pills.push({ group, label: pillLabels[group] || group, firstIndex: i, lastIndex: i });
+    }
+  });
+
+  const currentKey = state.steps[state.currentStepIndex];
+  const currentGroup = AUTO_STEPS.includes(currentKey) ? 'auto' : currentKey;
+
+  pills.forEach(pill => {
+    const el = document.createElement('div');
+    const isActive   = pill.group === currentGroup;
+    const isComplete = pill.lastIndex < state.currentStepIndex && !isActive;
+    el.className = 'step-pill' + (isActive ? ' active' : '') + (isComplete ? ' complete' : '');
+    el.textContent = pill.label;
+    // Allow backward navigation to the first step in the group
+    el.onclick = () => {
+      if (pill.firstIndex < state.currentStepIndex) {
+        state.currentStepIndex = pill.firstIndex;
+        renderStep();
+      }
+    };
+    nav.appendChild(el);
   });
 }
 
@@ -215,6 +240,21 @@ function renderStep() {
   // so vehicle labels (Year Make Model) are current
   if (key === 'auto-coverage') {
     refreshVehicleCovBlocks();
+  }
+
+  // When entering the drivers screen, sync Driver 1 from applicant fields
+  // (data is now filled in; this is more reliable than doing it at addDriver() time)
+  if (key === 'auto-drivers') {
+    const fields = {
+      'd1-first': 'app-first',
+      'd1-last':  'app-last',
+      'd1-dob':   'app-dob',
+    };
+    for (const [driverId, appId] of Object.entries(fields)) {
+      const appEl    = document.getElementById(appId);
+      const driverEl = document.getElementById(driverId);
+      if (appEl && driverEl && appEl.value) driverEl.value = appEl.value;
+    }
   }
 
   // Progress
