@@ -72,10 +72,8 @@ function handleLifeType() {
   const isLife      = LIFE_PRODUCTS.includes(type);
   const isHealth    = HEALTH_PRODUCTS.includes(type);
   const isTerm      = type === 'Term Life';
-  const needsMeds   = MED_TYPES_REQUIRING_MEDS.includes(type);
-  const isMedicare  = MEDICARE_PRODUCTS.includes(type);
 
-  // Life-only fields
+  // Life-only fields (coverage amount, term, beneficiary)
   const lifeGroup = document.getElementById('life-fields-group');
   if (lifeGroup) lifeGroup.style.display = isLife ? 'block' : 'none';
 
@@ -86,25 +84,6 @@ function handleLifeType() {
   // Shared fields (height/weight/tobacco/conditions/notes) — both Life and Health
   const sharedGroup = document.getElementById('life-shared-group');
   if (sharedGroup) sharedGroup.style.display = (isLife || isHealth) ? 'block' : 'none';
-
-  // Medications block — Health only, specific products
-  const medsBlock = document.getElementById('life-meds-block');
-  if (medsBlock) medsBlock.style.display = needsMeds ? 'block' : 'none';
-  if (needsMeds && document.getElementById('medications-container').children.length === 0) {
-    addMedication();
-  }
-
-  // Medicare sub-section
-  const medicareGroup = document.getElementById('life-medicare-group');
-  if (medicareGroup) medicareGroup.style.display = isMedicare ? 'block' : 'none';
-
-  // Current plan detail blocks — mutually exclusive
-  const suppBlock = document.getElementById('life-current-supp-block');
-  const advBlock  = document.getElementById('life-current-adv-block');
-  const acaBlock  = document.getElementById('life-current-aca-block');
-  if (suppBlock) suppBlock.style.display = type === 'Medicare Supplement' ? 'block' : 'none';
-  if (advBlock)  advBlock.style.display  = type === 'Medicare Advantage'  ? 'block' : 'none';
-  if (acaBlock)  acaBlock.style.display  = type === 'Health / ACA'        ? 'block' : 'none';
 }
 
 function addMedication() {
