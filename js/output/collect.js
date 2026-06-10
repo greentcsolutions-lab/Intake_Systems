@@ -5,10 +5,13 @@ function validateStep() {
   const key = state.steps[state.currentStepIndex];
 
   const panelMap = {
-    'applicant':     'step-applicant',
-    'auto-vehicles': 'step-auto-vehicles',
-    'auto-coverage': 'step-auto-coverage',
-    'review':        'step-review',
+    'applicant':      'step-applicant',
+    'auto-vehicles':  'step-auto-vehicles',
+    'auto-coverage':  'step-auto-coverage',
+    'life-product':   'step-life-product',
+    'life-medicare':  'step-life-medicare',
+    'life-meds':      'step-life-meds',
+    'review':         'step-review',
   };
   const panelId = panelMap[key] ||
     (typeof LOB_META !== 'undefined' && LOB_META[key]?.step) ||
@@ -126,6 +129,15 @@ function validateStep() {
     // Static * fields: BI Liability, Property Damage
     scanContainer(panel);
   }
+
+  // ══════════════════════════════════════════
+  // LIFE — PRODUCT
+  // ══════════════════════════════════════════
+  else if (key === 'life-product') {
+    flagById('life-type', 'Product Type');
+  }
+
+  // life-medicare and life-meds are pass-through (no required fields)
 
   if (errors.length === 0) return true;
 
