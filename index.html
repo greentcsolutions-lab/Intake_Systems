@@ -726,15 +726,15 @@
     </div>
   </div>
 
-  <!-- LIFE / HEALTH -->
-<div id="step-life" class="step-panel hidden">
+  <!-- LIFE / HEALTH: PRODUCT & HEALTH INFO -->
+<div id="step-life-product" class="step-panel hidden">
     <div class="card">
-      <div class="card-title">❤️ Life / Health (Basic)</div>
-      <div class="card-desc">Basic life and health intake information.</div>
-      <!-- Product Type — always visible -->
+      <div class="card-title">❤️ Product & Health Info</div>
+      <div class="card-desc">Select the product type and provide basic health information.</div>
+
       <div class="field-grid">
         <div class="field">
-          <label>Product Type</label>
+          <label>Product Type <span class="req">*</span></label>
           <select id="life-type" onchange="handleLifeType()">
             <option value="">-- Select --</option>
             <option>Term Life</option><option>Whole Life</option>
@@ -800,225 +800,235 @@
           <div class="alert-icon">⚠️</div>
           <div><strong>Tobacco Use</strong> Rated as smoker for most carriers. Will significantly affect premium.</div>
         </div>
-
-        <!-- Medications — Health products only -->
-        <div id="life-meds-block" style="display:none">
-          <div class="section-divider"><span>Current Medications</span></div>
-          <div class="alert alert-info" style="margin-bottom:14px">
-            <div class="alert-icon">ℹ️</div>
-            <div><strong>Medications Required</strong> List all current prescriptions including dosage and frequency. Required for underwriting on health and Medicare products.</div>
-          </div>
-          <label class="check-chip" id="med-pcp-chip" style="margin-bottom:14px;display:inline-flex">
-            <input type="checkbox" id="med-pcp-toggle" onchange="document.getElementById('med-pcp-chip').classList.toggle('selected',this.checked);toggleMedPCP()">
-            <span>📋 Medication List Provided by PCP / Pharmacist</span>
-          </label>
-          <div id="med-pcp-alert" class="alert alert-warn hidden" style="margin-bottom:14px">
-            <div class="alert-icon">⚠️</div>
-            <div><strong>Add PCP / Pharmacist Contact info to Notes</strong> — name, practice, and phone number.</div>
-          </div>
-          <div id="medications-container"></div>
-          <button class="btn-add" id="med-add-btn" onclick="addMedication()">+ Add Medication</button>
-        </div>
-
         <div class="section-divider"><span>Notes</span></div>
         <div class="field">
           <label>Additional Notes</label>
           <textarea id="life-notes" placeholder="Any additional health history, medications, etc."></textarea>
         </div>
       </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+    </div>
+  </div>
 
-      <!-- Medicare sub-section — shown for Medicare Supplement, Medicare Advantage, Health/ACA -->
-      <div id="life-medicare-group" style="display:none">
-        <div class="section-divider"><span>Medicare Details</span></div>
+  <!-- LIFE / HEALTH: MEDICARE DETAILS -->
+<div id="step-life-medicare" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">❤️ Medicare Details</div>
+      <div class="card-desc">Medicare coverage information and current plan details.</div>
 
+      <div class="field-grid">
+        <div class="field">
+          <label>Medicare Part A &amp; B?</label>
+          <select id="life-medicare-ab" onchange="handleMedicareAB()">
+            <option value="">-- Select --</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="field" id="life-medicare-parta-field" style="display:none">
+          <label>Part A Effective Date</label>
+          <input type="date" id="life-medicare-parta">
+        </div>
+        <div class="field" id="life-medicare-partb-field" style="display:none">
+          <label>Part B Effective Date</label>
+          <input type="date" id="life-medicare-partb">
+        </div>
+        <div class="field">
+          <label>Medicare Claim #</label>
+          <input type="text" id="life-medicare-claim" placeholder="1EG4-TE5-MK72">
+        </div>
+      </div>
+
+      <div class="field-grid" style="margin-top:12px">
+        <div class="field">
+          <label>VA Coverage?</label>
+          <select id="life-va">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Medicaid?</label>
+          <select id="life-medicaid" onchange="handleMedicaid()">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field" id="life-medicaid-num-field" style="display:none">
+          <label>Medicaid #</label>
+          <input type="text" id="life-medicaid-num" placeholder="Medicaid ID number">
+        </div>
+        <div class="field">
+          <label>Extra Help / LIS?</label>
+          <select id="life-lis" onchange="handleLIS()">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field" id="life-lis-level-field" style="display:none">
+          <label>LIS Level</label>
+          <select id="life-lis-level">
+            <option value="">-- Select --</option>
+            <option>Level 1</option><option>Level 2</option>
+            <option>Level 3</option><option>Level 4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Mail Order Pharmacy?</label>
+          <select id="life-mail-order">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-grid" style="margin-top:12px">
+        <div class="field">
+          <label>Preferred Pharmacy</label>
+          <input type="text" id="life-pharmacy" placeholder="e.g. Walgreens, CVS, Walmart">
+        </div>
+        <div class="field">
+          <label>Preferred Hospital</label>
+          <input type="text" id="life-hospital" placeholder="e.g. Mercy, Cox, OHC, TCMH, Baxter">
+        </div>
+        <div class="field">
+          <label>PCP Name</label>
+          <input type="text" id="life-pcp-name" placeholder="Dr. Jane Smith">
+        </div>
+        <div class="field">
+          <label>PCP Office Location</label>
+          <input type="text" id="life-pcp-location" placeholder="Practice name or city">
+        </div>
+        <div class="field">
+          <label>Specialist</label>
+          <input type="text" id="life-specialist" placeholder="Cardiologist, Oncologist, etc.">
+        </div>
+      </div>
+
+      <!-- Current plan details — varies by product type -->
+      <div id="life-current-supp-block" style="display:none">
+        <div class="section-divider"><span>Current Medicare Supplement</span></div>
         <div class="field-grid">
           <div class="field">
-            <label>Medicare Part A &amp; B?</label>
-            <select id="life-medicare-ab" onchange="handleMedicareAB()">
+            <label>Current Company</label>
+            <input type="text" id="life-supp-company" placeholder="Aetna, Mutual of Omaha, etc.">
+          </div>
+          <div class="field">
+            <label>Plan Type</label>
+            <select id="life-supp-plan-type">
               <option value="">-- Select --</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </div>
-          <div class="field" id="life-medicare-parta-field" style="display:none">
-            <label>Part A Effective Date</label>
-            <input type="date" id="life-medicare-parta">
-          </div>
-          <div class="field" id="life-medicare-partb-field" style="display:none">
-            <label>Part B Effective Date</label>
-            <input type="date" id="life-medicare-partb">
-          </div>
-          <div class="field">
-            <label>Medicare Claim #</label>
-            <input type="text" id="life-medicare-claim" placeholder="1EG4-TE5-MK72">
-          </div>
-        </div>
-
-        <div class="field-grid" style="margin-top:12px">
-          <div class="field">
-            <label>VA Coverage?</label>
-            <select id="life-va">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
+              <option>Plan A</option><option>Plan B</option><option>Plan C</option>
+              <option>Plan D</option><option>Plan F</option><option>Plan G</option>
+              <option>Plan G-HD</option><option>Plan K</option><option>Plan L</option>
+              <option>Plan M</option><option>Plan N</option>
             </select>
           </div>
           <div class="field">
-            <label>Medicaid?</label>
-            <select id="life-medicaid" onchange="handleMedicaid()">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-          <div class="field" id="life-medicaid-num-field" style="display:none">
-            <label>Medicaid #</label>
-            <input type="text" id="life-medicaid-num" placeholder="Medicaid ID number">
+            <label>Current Premium</label>
+            <input type="text" id="life-supp-premium" placeholder="$150/mo">
           </div>
           <div class="field">
-            <label>Extra Help / LIS?</label>
-            <select id="life-lis" onchange="handleLIS()">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-          <div class="field" id="life-lis-level-field" style="display:none">
-            <label>LIS Level</label>
-            <select id="life-lis-level">
-              <option value="">-- Select --</option>
-              <option>Level 1</option>
-              <option>Level 2</option>
-              <option>Level 3</option>
-              <option>Level 4</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Mail Order Pharmacy?</label>
-            <select id="life-mail-order">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="field-grid" style="margin-top:12px">
-          <div class="field">
-            <label>Preferred Pharmacy</label>
-            <input type="text" id="life-pharmacy" placeholder="e.g. Walgreens, CVS, Walmart">
-          </div>
-          <div class="field">
-            <label>Preferred Hospital</label>
-            <input type="text" id="life-hospital" placeholder="e.g. Mercy, Cox, OHC, TCMH, Baxter">
-          </div>
-          <div class="field">
-            <label>PCP Name</label>
-            <input type="text" id="life-pcp-name" placeholder="Dr. Jane Smith">
-          </div>
-          <div class="field">
-            <label>PCP Office Location</label>
-            <input type="text" id="life-pcp-location" placeholder="Practice name or city">
-          </div>
-          <div class="field">
-            <label>Specialist</label>
-            <input type="text" id="life-specialist" placeholder="Cardiologist, Oncologist, etc.">
-          </div>
-        </div>
-
-        <!-- Current plan details — varies by product type -->
-        <div id="life-current-supp-block" style="display:none">
-          <div class="section-divider"><span>Current Medicare Supplement</span></div>
-          <div class="field-grid">
-            <div class="field">
-              <label>Current Company</label>
-              <input type="text" id="life-supp-company" placeholder="Aetna, Mutual of Omaha, etc.">
-            </div>
-            <div class="field">
-              <label>Plan Type</label>
-              <select id="life-supp-plan-type">
-                <option value="">-- Select --</option>
-                <option>Plan A</option><option>Plan B</option><option>Plan C</option>
-                <option>Plan D</option><option>Plan F</option><option>Plan G</option>
-                <option>Plan G-HD</option><option>Plan K</option><option>Plan L</option>
-                <option>Plan M</option><option>Plan N</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Current Premium</label>
-              <input type="text" id="life-supp-premium" placeholder="$150/mo">
-            </div>
-            <div class="field">
-              <label>Renewal Date</label>
-              <input type="date" id="life-supp-renewal">
-            </div>
-          </div>
-        </div>
-
-        <div id="life-current-adv-block" style="display:none">
-          <div class="section-divider"><span>Current Medicare Advantage</span></div>
-          <div class="field-grid">
-            <div class="field">
-              <label>Current Company</label>
-              <input type="text" id="life-adv-company" placeholder="Humana, UnitedHealthcare, etc.">
-            </div>
-            <div class="field">
-              <label>Plan Name</label>
-              <input type="text" id="life-adv-plan" placeholder="e.g. Gold Plus HMO">
-            </div>
-          </div>
-        </div>
-
-        <div id="life-current-aca-block" style="display:none">
-          <div class="section-divider"><span>Current Health / ACA Plan</span></div>
-          <div class="field-grid">
-            <div class="field">
-              <label>Current Company</label>
-              <input type="text" id="life-aca-company" placeholder="BCBS, Ambetter, etc.">
-            </div>
-            <div class="field">
-              <label>Policy #</label>
-              <input type="text" id="life-aca-policy" placeholder="Policy number">
-            </div>
-          </div>
-        </div>
-
-        <!-- Prescription Plan -->
-        <div class="section-divider"><span>Prescription / Part D</span></div>
-        <div class="field-grid">
-          <div class="field">
-            <label>Prescription Plan (Part D)?</label>
-            <select id="life-partd" onchange="handlePartD()">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-          <div class="field" id="life-partd-company-field" style="display:none">
-            <label>Part D Company</label>
-            <input type="text" id="life-partd-company" placeholder="SilverScript, Humana, etc.">
-          </div>
-        </div>
-
-        <!-- Group Coverage -->
-        <div class="section-divider"><span>Group / Other Coverage</span></div>
-        <div class="field-grid">
-          <div class="field">
-            <label>Group Coverage?</label>
-            <select id="life-group-cov" onchange="handleGroupCov()">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-          <div class="field" id="life-group-company-field" style="display:none">
-            <label>Group Company</label>
-            <input type="text" id="life-group-company" placeholder="Employer / union plan">
-          </div>
-          <div class="field" id="life-group-policy-field" style="display:none">
-            <label>Group Policy #</label>
-            <input type="text" id="life-group-policy" placeholder="Policy number">
-          </div>
-          <div class="field" id="life-group-term-field" style="display:none">
-            <label>Termination Date</label>
-            <input type="date" id="life-group-term">
+            <label>Renewal Date</label>
+            <input type="date" id="life-supp-renewal">
           </div>
         </div>
       </div>
+
+      <div id="life-current-adv-block" style="display:none">
+        <div class="section-divider"><span>Current Medicare Advantage</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Current Company</label>
+            <input type="text" id="life-adv-company" placeholder="Humana, UnitedHealthcare, etc.">
+          </div>
+          <div class="field">
+            <label>Plan Name</label>
+            <input type="text" id="life-adv-plan" placeholder="e.g. Gold Plus HMO">
+          </div>
+        </div>
+      </div>
+
+      <div id="life-current-aca-block" style="display:none">
+        <div class="section-divider"><span>Current Health / ACA Plan</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Current Company</label>
+            <input type="text" id="life-aca-company" placeholder="BCBS, Ambetter, etc.">
+          </div>
+          <div class="field">
+            <label>Policy #</label>
+            <input type="text" id="life-aca-policy" placeholder="Policy number">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-divider"><span>Prescription / Part D</span></div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Prescription Plan (Part D)?</label>
+          <select id="life-partd" onchange="handlePartD()">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field" id="life-partd-company-field" style="display:none">
+          <label>Part D Company</label>
+          <input type="text" id="life-partd-company" placeholder="SilverScript, Humana, etc.">
+        </div>
+      </div>
+
+      <div class="section-divider"><span>Group / Other Coverage</span></div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Group Coverage?</label>
+          <select id="life-group-cov" onchange="handleGroupCov()">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field" id="life-group-company-field" style="display:none">
+          <label>Group Company</label>
+          <input type="text" id="life-group-company" placeholder="Employer / union plan">
+        </div>
+        <div class="field" id="life-group-policy-field" style="display:none">
+          <label>Group Policy #</label>
+          <input type="text" id="life-group-policy" placeholder="Policy number">
+        </div>
+        <div class="field" id="life-group-term-field" style="display:none">
+          <label>Termination Date</label>
+          <input type="date" id="life-group-term">
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="nextStep()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- LIFE / HEALTH: MEDICATIONS -->
+<div id="step-life-meds" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">❤️ Current Medications</div>
+      <div class="card-desc">List all current prescriptions including dosage and frequency. Required for health and Medicare products.</div>
+
+      <div class="alert alert-info" style="margin-bottom:14px">
+        <div class="alert-icon">ℹ️</div>
+        <div><strong>Medications Required</strong> List all current prescriptions including dosage and frequency. Required for underwriting on health and Medicare products.</div>
+      </div>
+      <label class="check-chip" id="med-pcp-chip" style="margin-bottom:14px;display:inline-flex">
+        <input type="checkbox" id="med-pcp-toggle" onchange="document.getElementById('med-pcp-chip').classList.toggle('selected',this.checked);toggleMedPCP()">
+        <span>📋 Medication List Provided by PCP / Pharmacist</span>
+      </label>
+      <div id="med-pcp-alert" class="alert alert-warn hidden" style="margin-bottom:14px">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>Add PCP / Pharmacist Contact info to Notes</strong> — name, practice, and phone number.</div>
+      </div>
+      <div id="medications-container"></div>
+      <button class="btn-add" id="med-add-btn" onclick="addMedication()">+ Add Medication</button>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
