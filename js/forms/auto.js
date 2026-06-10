@@ -209,9 +209,11 @@ function refreshVehicleCovBlocks() {
 }
 
 // ══════════════════════════════════════════
-// HOUSEHOLD MEMBER REPEATER
+// HOUSEHOLD MEMBER REPEATER (additional members beyond applicant)
+// Max 5 additional (6 total including applicant)
 // ══════════════════════════════════════════
 function addHouseholdMember() {
+  if (state.driverCount >= 5) return; // max 5 additional
   state.driverCount++;
   const n = state.driverCount;
   const c = document.getElementById('drivers-container');
@@ -220,14 +222,15 @@ function addHouseholdMember() {
   div.id = `driver-${n}`;
   div.innerHTML = `
     <div class="repeater-header">
-      <div class="repeater-title">Household Member ${n}</div>
-      ${n > 1 ? `<button class="btn-remove" onclick="removeItem('driver-${n}')">Remove</button>` : ''}
+      <div class="repeater-title">Additional Member ${n}</div>
+      <button class="btn-remove" onclick="removeMember('driver-${n}')">Remove</button>
     </div>
     <div class="field-grid three">
       <div class="field"><label>First Name</label><input type="text" id="d${n}-first"></div>
       <div class="field"><label>Last Name</label><input type="text" id="d${n}-last"></div>
       <div class="field"><label>Date of Birth</label><input type="date" id="d${n}-dob" onchange="checkDriverAge(${n})"></div>
-      <div class="field"><label>License #</label><input type="text" id="d${n}-lic"></div>
+      <div class="field"><label>SSN / Last 4 <span class="flag">⚡ optional</span></label><input type="text" id="d${n}-ssn" placeholder="XXX-XX-1234" maxlength="11"></div>
+      <div class="field"><label>License # <span class="flag">⚡ optional</span></label><input type="text" id="d${n}-lic"></div>
       <div class="field"><label>License State</label>
         <select id="d${n}-lic-state">
           <option>MO</option><option>IL</option><option>KS</option><option>AR</option><option>TN</option>
@@ -236,7 +239,7 @@ function addHouseholdMember() {
       </div>
       <div class="field"><label>Relationship</label>
         <select id="d${n}-rel">
-          <option>Self</option><option>Spouse</option><option>Child</option>
+          <option>Spouse</option><option>Child</option>
           <option>Parent</option><option>Other</option>
         </select>
       </div>
@@ -279,21 +282,19 @@ function addHouseholdMember() {
     </div>`;
   c.appendChild(div);
 
-  // Auto-populate Member 1 from applicant fields
-  if (n === 1) {
-    const fieldMap = {
-      'd1-first': 'app-first',
-      'd1-last':  'app-last',
-      'd1-dob':   'app-dob',
-    };
-    for (const [memberId, appId] of Object.entries(fieldMap)) {
-      const appEl    = document.getElementById(appId);
-      const memberEl = document.getElementById(memberId);
-      if (appEl && memberEl && appEl.value) memberEl.value = appEl.value;
-    }
-    const relEl = document.getElementById('d1-rel');
-    if (relEl) relEl.value = 'Self';
+  // Hide button once 5 additional members reached
+  if (state.driverCount >= 5) {
+    const btn = document.getElementById('add-member-btn');
+    if (btn) btn.style.display = 'none';
   }
+}
+
+function removeMember(id) {
+  document.getElementById(id)?.remove();
+  state.driverCount--;
+  // Re-show button if under limit
+  const btn = document.getElementById('add-member-btn');
+  if (btn) btn.style.display = '';
 }
 
 function checkDriverHistory(n) {
