@@ -12,7 +12,6 @@ const state = {
 
 const LOB_META = {
   home: { label: 'Home/Renters', step: 'step-home' },
-  life: { label: 'Life/Health', step: 'step-life' },
 };
 
 // ══════════════════════════════════════════
@@ -35,11 +34,13 @@ function startIntake() {
   if (!lobs.length) { alert('Please select at least one line of business.'); return; }
   state.selectedLOBs = lobs;
 
-  // Build step order — auto expands into two focused screens
+  // Build step order — auto expands into two focused screens, life starts with one
   const steps = ['applicant'];
   lobs.forEach(lob => {
     if (lob === 'auto') {
       steps.push('auto-vehicles', 'auto-coverage');
+    } else if (lob === 'life') {
+      steps.push('life-product'); // medicare + meds steps added dynamically on Continue
     } else {
       steps.push(lob);
     }
@@ -178,6 +179,7 @@ function buildStepNav() {
   nav.innerHTML = '';
 
   const AUTO_STEPS = ['auto-vehicles', 'auto-coverage'];
+  const LIFE_STEPS = ['life-product', 'life-medicare', 'life-meds'];
 
   const pillLabels = {
     applicant: 'Applicant',
@@ -187,10 +189,10 @@ function buildStepNav() {
     review:    '✅ Review',
   };
 
-  // Build a de-duplicated pill list — auto sub-steps collapse into one 'auto' pill
+  // Build a de-duplicated pill list — sub-steps collapse into one pill
   const pills = []; // { label, firstIndex, lastIndex }
   state.steps.forEach((s, i) => {
-    const group = AUTO_STEPS.includes(s) ? 'auto' : s;
+    const group = AUTO_STEPS.includes(s) ? 'auto' : LIFE_STEPS.includes(s) ? 'life' : s;
     const last = pills[pills.length - 1];
     if (last && last.group === group) {
       last.lastIndex = i;
@@ -200,7 +202,7 @@ function buildStepNav() {
   });
 
   const currentKey = state.steps[state.currentStepIndex];
-  const currentGroup = AUTO_STEPS.includes(currentKey) ? 'auto' : currentKey;
+  const currentGroup = AUTO_STEPS.includes(currentKey) ? 'auto' : LIFE_STEPS.includes(currentKey) ? 'life' : currentKey;
 
   pills.forEach(pill => {
     const el = document.createElement('div');
@@ -226,10 +228,13 @@ function renderStep() {
   const key = state.steps[state.currentStepIndex];
 
   const panelMap = {
-    'applicant':     'step-applicant',
-    'auto-vehicles': 'step-auto-vehicles',
-    'auto-coverage': 'step-auto-coverage',
-    'review':        'step-review',
+    'applicant':      'step-applicant',
+    'auto-vehicles':  'step-auto-vehicles',
+    'auto-coverage':  'step-auto-coverage',
+    'life-product':   'step-life-product',
+    'life-medicare':  'step-life-medicare',
+    'life-meds':      'step-life-meds',
+    'review':         'step-review',
   };
   const panelId = panelMap[key] || LOB_META[key]?.step || `step-${key}`;
   document.getElementById(panelId)?.classList.remove('hidden');
@@ -238,6 +243,25 @@ function renderStep() {
   // so vehicle labels (Year Make Model) are current
   if (key === 'auto-coverage') {
     refreshVehicleCovBlocks();
+  }
+
+  // When entering the meds screen, ensure at least one med row exists
+  if (key === 'life-meds') {
+    const container = document.getElementById('medications-container');
+    if (container && container.children.length === 0) {
+      addMedication();
+    }
+  }
+
+  // When entering medicare screen, show the correct current plan block
+  if (key === 'life-medicare') {
+    const type = document.getElementById('life-type')?.value;
+    const suppBlock = document.getElementById('life-current-supp-block');
+    const advBlock  = document.getElementById('life-current-adv-block');
+    const acaBlock  = document.getElementById('life-current-aca-block');
+    if (suppBlock) suppBlock.style.display = type === 'Medicare Supplement' ? 'block' : 'none';
+    if (advBlock)  advBlock.style.display  = type === 'Medicare Advantage'  ? 'block' : 'none';
+    if (acaBlock)  acaBlock.style.display  = type === 'Health / ACA'        ? 'block' : 'none';
   }
 
   // Progress
@@ -255,17 +279,56 @@ function renderStep() {
 
 function getStepLabel(key) {
   const labels = {
-    applicant:       'Applicant Info',
-    'auto-vehicles': 'Vehicles',
-    'auto-coverage': 'Auto Coverage',
-    home:            'Home / Renters',
-    life:            'Life / Health',
-    review:          'Review & Export',
+    applicant:        'Applicant Info',
+    'auto-vehicles':  'Vehicles',
+    'auto-coverage':  'Auto Coverage',
+    'life-product':   'Product & Health',
+    'life-medicare':  'Medicare Details',
+    'life-meds':      'Medications',
+    home:             'Home / Renters',
+    life:             'Life / Health',
+    review:           'Review & Export',
   };
   return labels[key] || key;
 }
 
+// ══════════════════════════════════════════
+// DYNAMIC LIFE STEP RESOLUTION
+// Called when leaving life-product — inserts/removes
+// life-medicare and life-meds based on product type
+// ══════════════════════════════════════════
+function resolveLifeSteps() {
+  const MEDICARE_PRODUCTS = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'];
+  const MEDS_PRODUCTS     = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'];
+
+  const type = document.getElementById('life-type')?.value || '';
+  const needsMedicare = MEDICARE_PRODUCTS.includes(type);
+  const needsMeds     = MEDS_PRODUCTS.includes(type);
+
+  // Find the index of life-product in steps
+  const lifeIdx = state.steps.indexOf('life-product');
+  if (lifeIdx === -1) return;
+
+  // Remove any existing life sub-steps after life-product (before review)
+  const reviewIdx = state.steps.indexOf('review');
+  const lifeSubSteps = ['life-medicare', 'life-meds'];
+  state.steps = state.steps.filter((s, i) =>
+    i <= lifeIdx || !lifeSubSteps.includes(s)
+  );
+
+  // Re-insert needed sub-steps after life-product
+  const insertAt = state.steps.indexOf('life-product') + 1;
+  const toInsert = [];
+  if (needsMedicare) toInsert.push('life-medicare');
+  if (needsMeds)     toInsert.push('life-meds');
+  state.steps.splice(insertAt, 0, ...toInsert);
+}
+
 function nextStep() {
+  // When leaving life-product, resolve dynamic sub-steps before advancing
+  if (state.steps[state.currentStepIndex] === 'life-product') {
+    resolveLifeSteps();
+  }
   if (state.currentStepIndex < state.steps.length - 1) {
     state.currentStepIndex++;
     renderStep();
