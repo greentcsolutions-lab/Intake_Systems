@@ -128,16 +128,16 @@
       <div class="section-divider"><span>Household Members</span></div>
       <div class="alert alert-info" style="margin-bottom:14px">
         <div class="alert-icon">ℹ️</div>
-        <div><strong>List all household members age 16 or older.</strong> This information is used for auto rating and home underwriting. All licensed drivers must be listed.</div>
+        <div><strong>List all household members age 16 or older.</strong> Required for auto rating and home underwriting. All licensed drivers must be included.</div>
       </div>
-      <div class="field-grid" style="margin-bottom:14px">
+      <div class="field-grid" style="margin-bottom:16px">
         <div class="field">
           <label>Total Household Members (all ages)</label>
           <input type="number" id="app-household-total" placeholder="e.g. 4" min="1">
         </div>
       </div>
       <div id="drivers-container"></div>
-      <button class="btn-add" onclick="addHouseholdMember()">+ Add Household Member</button>
+      <button class="btn-add" id="add-member-btn" onclick="addHouseholdMember()">+ Add Additional Household Member</button>
 
       <div class="section-divider"><span>Current Coverage</span></div>
       <div id="carrier-blocks-container">
