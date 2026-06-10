@@ -35,7 +35,7 @@ function startIntake() {
   if (!lobs.length) { alert('Please select at least one line of business.'); return; }
   state.selectedLOBs = lobs;
 
-  // Build step order — auto expands into three focused screens
+  // Build step order — auto expands into two focused screens
   const steps = ['applicant'];
   lobs.forEach(lob => {
     if (lob === 'auto') {
@@ -61,9 +61,8 @@ function startIntake() {
   // Render per-LOB carrier blocks on the applicant page
   renderCarrierBlocks(lobs);
 
-  // Init with single vehicle and single household member
+  // Init with single vehicle
   addVehicle();
-  addHouseholdMember();
 
   document.getElementById('step-lob').classList.add('hidden');
   buildStepNav();
