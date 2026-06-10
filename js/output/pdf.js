@@ -119,10 +119,10 @@ function buildPrintDocument() {
     for (let i = 1; i <= state.driverCount; i++) {
       if (!document.getElementById(`d${i}-first`)) continue;
       const name = [v(`d${i}-first`), v(`d${i}-last`)].filter(Boolean).join(' ') || `Member ${i}`;
-      const hasIncident = parseInt(v(`d${i}-accidents`)) > 0 || parseInt(v(`d${i}-violations`)) > 0 || v(`d${i}-dui`) === 'Yes';
       html += `${subHeader(`Household Member ${i} — ${name}`)}
       <div class="pd-grid">
         ${row('Date of Birth', v(`d${i}-dob`))}
+        ${row('SSN / Last 4', v(`d${i}-ssn`))}
         ${row('License #', v(`d${i}-lic`))}
         ${row('License State', v(`d${i}-lic-state`))}
         ${row('Relationship', v(`d${i}-rel`))}

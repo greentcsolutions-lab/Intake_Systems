@@ -7,7 +7,6 @@ function validateStep() {
   const panelMap = {
     'applicant':     'step-applicant',
     'auto-vehicles': 'step-auto-vehicles',
-    'auto-drivers':  'step-auto-drivers',
     'auto-coverage': 'step-auto-coverage',
     'review':        'step-review',
   };
@@ -218,11 +217,13 @@ function collectAllData() {
       data[`${prefix} GAP`] = val(`v${i}-gap`);
     }
     for (let i = 1; i <= state.driverCount; i++) {
-      const prefix = `Drv${i}`;
+      const prefix = `Member${i}`;
       if (!document.getElementById(`d${i}-first`)) continue;
       data[`${prefix} Name`] = `${val(`d${i}-first`)} ${val(`d${i}-last`)}`;
       data[`${prefix} DOB`] = val(`d${i}-dob`);
+      data[`${prefix} SSN`] = val(`d${i}-ssn`);
       data[`${prefix} License`] = val(`d${i}-lic`);
+      data[`${prefix} Relationship`] = val(`d${i}-rel`);
       data[`${prefix} Accidents`] = val(`d${i}-accidents`);
       data[`${prefix} Violations`] = val(`d${i}-violations`);
       data[`${prefix} DUI`] = val(`d${i}-dui`);
@@ -380,14 +381,15 @@ function computeFlags() {
     }
   }
 
-  // Auto — per driver
+  // Household members — incident history
   for (let i = 1; i <= state.driverCount; i++) {
     if (!document.getElementById(`d${i}-first`)) continue;
     const acc = parseInt(val(`d${i}-accidents`));
     const vio = parseInt(val(`d${i}-violations`));
     const dui = val(`d${i}-dui`);
     if (acc > 0 || vio > 0 || dui === 'Yes') {
-      flags.push(`${val(`d${i}-first`) || `Driver ${i}`}: Incident history flagged`);
+      const name = val(`d${i}-first`) || `Member ${i}`;
+      flags.push(`${name}: Incident history flagged`);
     }
   }
 
@@ -435,7 +437,12 @@ function buildReview() {
   sum.innerHTML = '';
 
   const sections = [
-    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Lines of Business','Submission Date'] },
+    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Total Household Members','Lines of Business','Submission Date'] },
+    // Additional household members — dynamic
+    ...Array.from({ length: state.driverCount }, (_, i) => {
+      const n = i + 1;
+      return { title: `Household Member ${n}`, keys: [`Member${n} Name`, `Member${n} DOB`, `Member${n} SSN`, `Member${n} License`, `Member${n} Relationship`, `Member${n} Accidents`, `Member${n} Violations`, `Member${n} DUI`] };
+    }),
     ...state.selectedLOBs.map(lob => {
       const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
       return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`, `${l} Carrier Name`, `${l} Policy Number`, `${l} Expiration Date`, `${l} Current Premium`, `${l} Lapse Reason`] };
