@@ -10,9 +10,7 @@ const state = {
   homeLossCount: 0,
 };
 
-const LOB_META = {
-  home: { label: 'Home/Renters', step: 'step-home' },
-};
+const LOB_META = {};
 
 // ══════════════════════════════════════════
 // LOB SELECTION
@@ -34,11 +32,13 @@ function startIntake() {
   if (!lobs.length) { alert('Please select at least one line of business.'); return; }
   state.selectedLOBs = lobs;
 
-  // Build step order — auto expands into two focused screens, life starts with one
+  // Build step order
   const steps = ['applicant'];
   lobs.forEach(lob => {
     if (lob === 'auto') {
       steps.push('auto-vehicles', 'auto-coverage');
+    } else if (lob === 'home') {
+      steps.push('home-type', 'home-details', 'home-coverage');
     } else if (lob === 'life') {
       steps.push('life-product'); // medicare + meds steps added dynamically on Continue
     } else {
@@ -166,7 +166,7 @@ function handleCarrierLapse(lob) {
   const alert   = document.getElementById(`${lob}-carrier-lapse-alert`);
   if (!alert) return;
 
-  const isNo        = insured === 'No';
+  const isNo          = insured === 'No';
   const isNewCustomer = lapse === 'Never had insurance';
   alert.classList.toggle('hidden', !isNo || isNewCustomer);
 }
@@ -179,6 +179,7 @@ function buildStepNav() {
   nav.innerHTML = '';
 
   const AUTO_STEPS = ['auto-vehicles', 'auto-coverage'];
+  const HOME_STEPS = ['home-type', 'home-details', 'home-coverage'];
   const LIFE_STEPS = ['life-product', 'life-medicare', 'life-meds'];
 
   const pillLabels = {
@@ -189,10 +190,17 @@ function buildStepNav() {
     review:    '✅ Review',
   };
 
+  function stepGroup(s) {
+    if (AUTO_STEPS.includes(s)) return 'auto';
+    if (HOME_STEPS.includes(s)) return 'home';
+    if (LIFE_STEPS.includes(s)) return 'life';
+    return s;
+  }
+
   // Build a de-duplicated pill list — sub-steps collapse into one pill
-  const pills = []; // { label, firstIndex, lastIndex }
+  const pills = [];
   state.steps.forEach((s, i) => {
-    const group = AUTO_STEPS.includes(s) ? 'auto' : LIFE_STEPS.includes(s) ? 'life' : s;
+    const group = stepGroup(s);
     const last = pills[pills.length - 1];
     if (last && last.group === group) {
       last.lastIndex = i;
@@ -201,8 +209,8 @@ function buildStepNav() {
     }
   });
 
-  const currentKey = state.steps[state.currentStepIndex];
-  const currentGroup = AUTO_STEPS.includes(currentKey) ? 'auto' : LIFE_STEPS.includes(currentKey) ? 'life' : currentKey;
+  const currentKey   = state.steps[state.currentStepIndex];
+  const currentGroup = stepGroup(currentKey);
 
   pills.forEach(pill => {
     const el = document.createElement('div');
@@ -210,7 +218,6 @@ function buildStepNav() {
     const isComplete = pill.lastIndex < state.currentStepIndex && !isActive;
     el.className = 'step-pill' + (isActive ? ' active' : '') + (isComplete ? ' complete' : '');
     el.textContent = pill.label;
-    // Allow backward navigation to the first step in the group
     el.onclick = () => {
       if (pill.firstIndex < state.currentStepIndex) {
         state.currentStepIndex = pill.firstIndex;
@@ -231,18 +238,25 @@ function renderStep() {
     'applicant':      'step-applicant',
     'auto-vehicles':  'step-auto-vehicles',
     'auto-coverage':  'step-auto-coverage',
+    'home-type':      'step-home-type',
+    'home-details':   'step-home-details',
+    'home-coverage':  'step-home-coverage',
     'life-product':   'step-life-product',
     'life-medicare':  'step-life-medicare',
     'life-meds':      'step-life-meds',
     'review':         'step-review',
   };
-  const panelId = panelMap[key] || LOB_META[key]?.step || `step-${key}`;
+  const panelId = panelMap[key] || `step-${key}`;
   document.getElementById(panelId)?.classList.remove('hidden');
 
-  // When entering the coverage screen, rebuild physical damage blocks
-  // so vehicle labels (Year Make Model) are current
+  // When entering auto coverage screen, rebuild physical damage blocks
   if (key === 'auto-coverage') {
     refreshVehicleCovBlocks();
+  }
+
+  // When entering home-details, show/hide owner fields based on policy type
+  if (key === 'home-details') {
+    applyHomeTypeToDetails();
   }
 
   // When entering the meds screen, ensure at least one med row exists
@@ -282,14 +296,38 @@ function getStepLabel(key) {
     applicant:        'Applicant Info',
     'auto-vehicles':  'Vehicles',
     'auto-coverage':  'Auto Coverage',
+    'home-type':      'Policy Type',
+    'home-details':   'Property Details',
+    'home-coverage':  'Home Coverage',
     'life-product':   'Product & Health',
     'life-medicare':  'Medicare Details',
     'life-meds':      'Medications',
-    home:             'Home / Renters',
-    life:             'Life / Health',
     review:           'Review & Export',
   };
   return labels[key] || key;
+}
+
+// ══════════════════════════════════════════
+// DYNAMIC HOME STEP RESOLUTION
+// Called when leaving home-type — skips home-details for Renters (HO-4)
+// ══════════════════════════════════════════
+function resolveHomeSteps() {
+  const type = document.getElementById('home-type')?.value || '';
+  const isRenters = type === 'Renters (HO-4)';
+
+  const homeTypeIdx = state.steps.indexOf('home-type');
+  if (homeTypeIdx === -1) return;
+
+  // Remove existing home sub-steps after home-type
+  const homeSubSteps = ['home-details', 'home-coverage'];
+  state.steps = state.steps.filter((s, i) =>
+    i <= homeTypeIdx || !homeSubSteps.includes(s)
+  );
+
+  // Re-insert: Renters skips details, goes straight to coverage
+  const insertAt = state.steps.indexOf('home-type') + 1;
+  const toInsert = isRenters ? ['home-coverage'] : ['home-details', 'home-coverage'];
+  state.steps.splice(insertAt, 0, ...toInsert);
 }
 
 // ══════════════════════════════════════════
@@ -305,18 +343,14 @@ function resolveLifeSteps() {
   const needsMedicare = MEDICARE_PRODUCTS.includes(type);
   const needsMeds     = MEDS_PRODUCTS.includes(type);
 
-  // Find the index of life-product in steps
   const lifeIdx = state.steps.indexOf('life-product');
   if (lifeIdx === -1) return;
 
-  // Remove any existing life sub-steps after life-product (before review)
-  const reviewIdx = state.steps.indexOf('review');
   const lifeSubSteps = ['life-medicare', 'life-meds'];
   state.steps = state.steps.filter((s, i) =>
     i <= lifeIdx || !lifeSubSteps.includes(s)
   );
 
-  // Re-insert needed sub-steps after life-product
   const insertAt = state.steps.indexOf('life-product') + 1;
   const toInsert = [];
   if (needsMedicare) toInsert.push('life-medicare');
@@ -325,10 +359,15 @@ function resolveLifeSteps() {
 }
 
 function nextStep() {
-  // When leaving life-product, resolve dynamic sub-steps before advancing
-  if (state.steps[state.currentStepIndex] === 'life-product') {
+  const currentKey = state.steps[state.currentStepIndex];
+
+  if (currentKey === 'home-type') {
+    resolveHomeSteps();
+  }
+  if (currentKey === 'life-product') {
     resolveLifeSteps();
   }
+
   if (state.currentStepIndex < state.steps.length - 1) {
     state.currentStepIndex++;
     renderStep();
