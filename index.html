@@ -27,7 +27,7 @@
   <div class="step-nav" id="stepNav"></div>
 
   <!-- LOB SELECTOR -->
-<div id="step-lob" class="step-panel">
+  <div id="step-lob" class="step-panel">
     <div class="card">
       <div class="card-title">Select Line(s) of Business</div>
       <div class="card-desc">Choose all that apply. Each selected line will add a section to this intake.</div>
@@ -55,7 +55,7 @@
   </div>
 
   <!-- APPLICANT -->
-<div id="step-applicant" class="step-panel hidden">
+  <div id="step-applicant" class="step-panel hidden">
     <div class="card">
       <div class="card-title">Applicant Information</div>
       <div class="card-desc">Primary named insured and contact details.</div>
@@ -174,9 +174,7 @@
       </div>
 
       <div class="section-divider"><span>Current Coverage</span></div>
-      <div id="carrier-blocks-container">
-        <!-- Populated by renderCarrierBlocks() in state.js after LOB selection -->
-      </div>
+      <div id="carrier-blocks-container"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="goToLOB()">← Back</button>
@@ -185,11 +183,10 @@
   </div>
 
   <!-- PERSONAL AUTO: VEHICLES -->
-<div id="step-auto-vehicles" class="step-panel hidden">
+  <div id="step-auto-vehicles" class="step-panel hidden">
     <div class="card">
       <div class="card-title">🚗 Vehicles</div>
       <div class="card-desc">Add all vehicles to be insured. Include year, make, model, and ownership details.</div>
-
       <div id="vehicles-container"></div>
       <button class="btn-add" onclick="addVehicle()">+ Add Vehicle</button>
     </div>
@@ -200,7 +197,7 @@
   </div>
 
   <!-- PERSONAL AUTO: COVERAGE -->
-<div id="step-auto-coverage" class="step-panel hidden">
+  <div id="step-auto-coverage" class="step-panel hidden">
     <div class="card">
       <div class="card-title">🚗 Auto Coverage</div>
       <div class="card-desc">Select liability limits and physical damage coverage for each vehicle.</div>
@@ -331,16 +328,16 @@
     </div>
   </div>
 
-  <!-- HOME / RENTERS -->
-<div id="step-home" class="step-panel hidden">
+  <!-- HOME: POLICY TYPE -->
+  <div id="step-home-type" class="step-panel hidden">
     <div class="card">
       <div class="card-title">🏠 Home / Renters</div>
-      <div class="card-desc">Property details and coverage selections.</div>
+      <div class="card-desc">Select the policy type to begin the home intake.</div>
 
       <div class="field-grid">
         <div class="field">
           <label>Policy Type <span class="req">*</span></label>
-          <select id="home-type" onchange="handleHomeType()">
+          <select id="home-type">
             <option value="">-- Select --</option>
             <option>Homeowners (HO-3)</option>
             <option>Condo (HO-6)</option>
@@ -349,26 +346,46 @@
             <option>Mobile Home</option>
           </select>
         </div>
-        <div class="field">
-          <label>Property Address (if different)</label>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- HOME: PROPERTY DETAILS -->
+  <div id="step-home-details" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">🏠 Property Details</div>
+      <div class="card-desc">Address, construction, and property characteristics.</div>
+
+      <!-- Property Address + Construction — always shown -->
+      <div class="section-divider"><span>Property Information</span></div>
+      <div class="field-grid">
+        <div class="field span2">
+          <label>Property Address <span class="flag">⚡ if different from mailing</span></label>
           <input type="text" id="home-addr" placeholder="Same as mailing if blank">
         </div>
-        <div class="field span2">
-          <label>Description of House <span class="flag">⚡ as described by insured</span></label>
-          <textarea id="home-description" placeholder="e.g. Two-story red brick colonial with white trim, black shutters, attached two-car garage on the left side. Large oak tree in front yard." style="min-height:60px"></textarea>
-        </div>
-        <div class="field span2">
-          <label>Directions to House <span class="flag">⚡ for field identification</span></label>
-          <textarea id="home-directions" placeholder="e.g. From Main St heading north, turn right on Elm Ave. Third house on the left past the stop sign." maxlength="1000" oninput="updateDirectionsCount(this)" style="min-height:80px"></textarea>
-          <div id="home-directions-count" style="font-size:11px;color:var(--muted);text-align:right;margin-top:3px">0 / 1000</div>
+        <div class="field">
+          <label>Construction Type <span class="req">*</span></label>
+          <select id="home-construction">
+            <option value="">-- Select --</option>
+            <option>Frame</option>
+            <option>Masonry</option>
+            <option>Masonry Veneer</option>
+            <option>Superior</option>
+            <option>Unknown</option>
+          </select>
         </div>
       </div>
 
+      <!-- Owner fields — hidden for Renters (HO-4) -->
       <div id="owner-fields">
         <div class="section-divider"><span>Property Details</span></div>
         <div class="field-grid three">
           <div class="field">
-            <label>Year Built</label>
+            <label>Year Built <span class="req">*</span></label>
             <input type="number" id="home-year" placeholder="1990" min="1800" max="2025">
           </div>
           <div class="field" id="home-purchase-date-field" style="display:none">
@@ -376,58 +393,72 @@
             <input type="date" id="home-purchase-date">
           </div>
           <div class="field">
-            <label>Square Footage</label>
+            <label>Square Footage <span class="req">*</span></label>
             <input type="number" id="home-sqft" placeholder="1800">
           </div>
           <div class="field">
-            <label>Construction Type</label>
-            <select id="home-construction">
-              <option value="">-- Select --</option>
-              <option>Frame</option><option>Masonry</option><option>Masonry Veneer</option>
-              <option>Superior</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Roof Type</label>
+            <label>Roof Type <span class="req">*</span></label>
             <select id="home-roof-type">
               <option value="">-- Select --</option>
-              <option>Asphalt Shingle</option><option>Metal</option><option>Tile</option>
-              <option>Wood Shake</option><option>Flat/TPO</option>
+              <option>Asphalt Shingle</option>
+              <option>Architectural Shingle</option>
+              <option>Metal</option>
+              <option>Tile</option>
+              <option>Wood Shake</option>
+              <option>Flat/TPO</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
-            <label>Roof Year</label>
+            <label>Roof Year <span class="req">*</span></label>
             <input type="number" id="home-roof-year" placeholder="2015" min="1900" max="2025" onchange="checkRoofAge()">
           </div>
           <div class="field">
-            <label>Foundation Type</label>
+            <label>Foundation Type <span class="req">*</span></label>
             <select id="home-foundation">
               <option value="">-- Select --</option>
-              <option>Slab</option><option>Crawl Space</option>
-              <option>Full Basement</option><option>Pier & Beam</option>
+              <option>Slab</option>
+              <option>Crawl Space</option>
+              <option>Full Basement</option>
+              <option>Walkout Basement</option>
+              <option>Pier &amp; Beam</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Garage Type</label>
             <select id="home-garage">
               <option value="">-- None --</option>
-              <option>Attached 1-Car</option><option>Attached 2-Car</option>
-              <option>Detached 1-Car</option><option>Detached 2-Car</option><option>Carport</option>
+              <option>Attached 1-Car</option>
+              <option>Attached 2-Car</option>
+              <option>Detached 1-Car</option>
+              <option>Detached 2-Car</option>
+              <option>Carport</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Heating Type</label>
             <select id="home-heat">
               <option value="">-- Select --</option>
-              <option>Gas Forced Air</option><option>Electric</option><option>Oil</option>
-              <option>Wood/Pellet Stove</option><option>Radiant</option>
+              <option>Gas Forced Air</option>
+              <option>Electric</option>
+              <option>Oil</option>
+              <option>Wood/Pellet Stove</option>
+              <option>Radiant</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
-            <label>Number of Stories</label>
+            <label>Number of Stories <span class="req">*</span></label>
             <select id="home-stories">
-              <option>1</option><option>1.5</option><option>2</option>
-              <option>2.5</option><option>3+</option>
+              <option value="">-- Select --</option>
+              <option>1</option>
+              <option>1.5</option>
+              <option>2</option>
+              <option>2.5</option>
+              <option>3+</option>
+              <option>Unknown</option>
             </select>
           </div>
         </div>
@@ -437,50 +468,66 @@
           <div><strong>Roof Age Flag</strong> Roof appears to be 15+ years old. Many carriers will require inspection or may limit coverage. Confirm market appetite.</div>
         </div>
 
-        <div class="section-divider"><span>Updates & Condition</span></div>
+        <div class="section-divider"><span>Updates &amp; Condition</span></div>
         <div class="field-grid">
           <div class="field">
             <label>Electrical Updated?</label>
             <select id="home-electric-updated">
-              <option>No</option><option>Yes</option>
+              <option value="">-- Select --</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Plumbing Updated?</label>
             <select id="home-plumbing-updated">
-              <option>No</option><option>Yes</option>
+              <option value="">-- Select --</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
-            <label>Knob & Tube Wiring?</label>
+            <label>Knob &amp; Tube Wiring?</label>
             <select id="home-knob-tube" onchange="checkKnobTube()">
-              <option>No</option><option>Yes</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Fuse Box (not breakers)?</label>
             <select id="home-fuse" onchange="checkFuseBox()">
-              <option>No</option><option>Yes</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Swimming Pool?</label>
             <select id="home-pool" onchange="checkPool()">
-              <option>No</option><option>Yes - Fenced</option>
+              <option>No</option>
+              <option>Yes - Fenced</option>
               <option>Yes - Unfenced</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Trampoline?</label>
             <select id="home-trampoline" onchange="checkTrampoline()">
-              <option>No</option><option>Yes - Netted</option>
+              <option>No</option>
+              <option>Yes - Netted</option>
               <option>Yes - Open</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
             <label>Dog on Premises?</label>
             <select id="home-dog" onchange="checkDog()">
-              <option>No</option><option>Yes</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field" id="dog-breed-field" style="display:none">
@@ -490,14 +537,16 @@
           <div class="field">
             <label>Business on Premises?</label>
             <select id="home-business" onchange="checkHomeBusiness()">
-              <option>No</option><option>Yes</option>
+              <option>No</option>
+              <option>Yes</option>
+              <option>Unknown</option>
             </select>
           </div>
         </div>
 
         <div id="knob-tube-alert" class="alert alert-warn hidden" style="margin-top:12px">
           <div class="alert-icon">⚠️</div>
-          <div><strong>Knob & Tube Wiring</strong> Many carriers will decline or surcharge. Confirm eligibility before quoting.</div>
+          <div><strong>Knob &amp; Tube Wiring</strong> Many carriers will decline or surcharge. Confirm eligibility before quoting.</div>
         </div>
         <div id="fuse-box-alert" class="alert alert-warn hidden">
           <div class="alert-icon">⚠️</div>
@@ -529,6 +578,7 @@
               <option>None</option>
               <option>1</option><option>2</option><option>3</option>
               <option>4</option><option>5+</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
@@ -539,6 +589,7 @@
               <option>Hard-Wired</option>
               <option>Hard-Wired w/ Battery Backup</option>
               <option>Smart / Connected</option>
+              <option>Unknown</option>
             </select>
           </div>
           <div class="field">
@@ -547,6 +598,7 @@
               <option value="">-- Select --</option>
               <option>None</option>
               <option>1</option><option>2</option><option>3+</option>
+              <option>Unknown</option>
             </select>
           </div>
         </div>
@@ -557,6 +609,7 @@
               <option value="No">No</option>
               <option value="Yes - Local Only">Yes - Local Only</option>
               <option value="Yes - Central Monitoring">Yes - Central Monitoring</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
           <div class="field" id="home-alarm-company-field" style="display:none">
@@ -572,6 +625,7 @@
               <option value="Yes - Indoor Only">Yes - Indoor Only</option>
               <option value="Yes - Outdoor Only">Yes - Outdoor Only</option>
               <option value="Yes - Indoor &amp; Outdoor">Yes - Indoor &amp; Outdoor</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
           <div class="field">
@@ -579,6 +633,7 @@
             <select id="home-doorbell">
               <option value="No">No</option>
               <option value="Yes">Yes</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
           <div class="field">
@@ -587,6 +642,7 @@
               <option value="No">No</option>
               <option value="Yes - Some Doors">Yes - Some Doors</option>
               <option value="Yes - All Doors">Yes - All Doors</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
           <div class="field">
@@ -594,6 +650,7 @@
             <select id="home-water-shutoff">
               <option value="No">No</option>
               <option value="Yes">Yes</option>
+              <option value="Unknown">Unknown</option>
             </select>
           </div>
         </div>
@@ -603,7 +660,8 @@
           <div class="field">
             <label>Mortgage / Lienholder?</label>
             <select id="home-lienholder" onchange="handleHomeLienholder()">
-              <option value="No">No</option><option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
             </select>
           </div>
         </div>
@@ -623,7 +681,33 @@
             </div>
           </div>
         </div>
+      </div><!-- /#owner-fields -->
+
+      <!-- Description / Directions — always shown -->
+      <div class="section-divider"><span>Description &amp; Directions</span></div>
+      <div class="field-grid">
+        <div class="field span2">
+          <label>Description of House <span class="flag">⚡ as described by insured</span></label>
+          <textarea id="home-description" placeholder="e.g. Two-story red brick colonial with white trim, black shutters, attached two-car garage on the left side. Large oak tree in front yard." style="min-height:60px"></textarea>
+        </div>
+        <div class="field span2">
+          <label>Directions to House <span class="flag">⚡ for field identification</span></label>
+          <textarea id="home-directions" placeholder="e.g. From Main St heading north, turn right on Elm Ave. Third house on the left past the stop sign." maxlength="1000" oninput="updateDirectionsCount(this)" style="min-height:80px"></textarea>
+          <div id="home-directions-count" style="font-size:11px;color:var(--muted);text-align:right;margin-top:3px">0 / 1000</div>
+        </div>
       </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+    </div>
+  </div>
+
+  <!-- HOME: COVERAGE -->
+  <div id="step-home-coverage" class="step-panel hidden">
+    <div class="card">
+      <div class="card-title">🏠 Home Coverage</div>
+      <div class="card-desc">Coverage selections, additional coverages, prior losses, and agent notes.</div>
 
       <div class="section-divider"><span>Coverage Selections</span></div>
       <div class="field-grid">
@@ -753,17 +837,16 @@
         <textarea id="home-notes" placeholder="Any additional underwriting notes, special circumstances, or follow-up items for this property..." style="min-height:100px"></textarea>
       </div>
     </div>
-
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
-      <button class="btn btn-primary" onclick="nextStep()">Continue →</button>
+      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
     </div>
   </div>
 
   <!-- LIFE / HEALTH: PRODUCT & HEALTH INFO -->
-<div id="step-life-product" class="step-panel hidden">
+  <div id="step-life-product" class="step-panel hidden">
     <div class="card">
-      <div class="card-title">❤️ Product & Health Info</div>
+      <div class="card-title">❤️ Product &amp; Health Info</div>
       <div class="card-desc">Select the product type and provide basic health information.</div>
 
       <div class="field-grid">
@@ -779,7 +862,6 @@
         </div>
       </div>
 
-      <!-- Life-only fields -->
       <div id="life-fields-group" style="display:none">
         <div class="field-grid" style="margin-top:16px">
           <div class="field">
@@ -796,12 +878,11 @@
           </div>
           <div class="field">
             <label>Beneficiary (Primary)</label>
-            <input type="text" id="life-beneficiary" placeholder="Full name & relationship">
+            <input type="text" id="life-beneficiary" placeholder="Full name &amp; relationship">
           </div>
         </div>
       </div>
 
-      <!-- Shared fields: height/weight/tobacco/conditions — Life and Health -->
       <div id="life-shared-group" style="display:none">
         <div class="field-grid" style="margin-top:16px">
           <div class="field">
@@ -848,7 +929,7 @@
   </div>
 
   <!-- LIFE / HEALTH: MEDICARE DETAILS -->
-<div id="step-life-medicare" class="step-panel hidden">
+  <div id="step-life-medicare" class="step-panel hidden">
     <div class="card">
       <div class="card-title">❤️ Medicare Details</div>
       <div class="card-desc">Medicare coverage information and current plan details.</div>
@@ -880,15 +961,13 @@
         <div class="field">
           <label>VA Coverage?</label>
           <select id="life-va">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field">
           <label>Medicaid?</label>
           <select id="life-medicaid" onchange="handleMedicaid()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field" id="life-medicaid-num-field" style="display:none">
@@ -898,8 +977,7 @@
         <div class="field">
           <label>Extra Help / LIS?</label>
           <select id="life-lis" onchange="handleLIS()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field" id="life-lis-level-field" style="display:none">
@@ -913,8 +991,7 @@
         <div class="field">
           <label>Mail Order Pharmacy?</label>
           <select id="life-mail-order">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
       </div>
@@ -942,7 +1019,6 @@
         </div>
       </div>
 
-      <!-- Current plan details — varies by product type -->
       <div id="life-current-supp-block" style="display:none">
         <div class="section-divider"><span>Current Medicare Supplement</span></div>
         <div class="field-grid">
@@ -1004,8 +1080,7 @@
         <div class="field">
           <label>Prescription Plan (Part D)?</label>
           <select id="life-partd" onchange="handlePartD()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field" id="life-partd-company-field" style="display:none">
@@ -1019,8 +1094,7 @@
         <div class="field">
           <label>Group Coverage?</label>
           <select id="life-group-cov" onchange="handleGroupCov()">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
+            <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field" id="life-group-company-field" style="display:none">
@@ -1044,10 +1118,10 @@
   </div>
 
   <!-- LIFE / HEALTH: MEDICATIONS -->
-<div id="step-life-meds" class="step-panel hidden">
+  <div id="step-life-meds" class="step-panel hidden">
     <div class="card">
       <div class="card-title">❤️ Current Medications</div>
-      <div class="card-desc">List all current prescriptions including dosage and frequency. Required for health and Medicare products.</div>
+      <div class="card-desc">List all current prescriptions including dosage and frequency.</div>
 
       <div class="alert alert-info" style="margin-bottom:14px">
         <div class="alert-icon">ℹ️</div>
@@ -1071,9 +1145,9 @@
   </div>
 
   <!-- REVIEW + EXPORT -->
-<div id="step-review" class="step-panel hidden">
+  <div id="step-review" class="step-panel hidden">
     <div class="card">
-      <div class="card-title">Review & Export</div>
+      <div class="card-title">Review &amp; Export</div>
       <div class="card-desc">Verify all information before exporting. Flagged items require attention.</div>
       <div id="flags-container"></div>
       <div id="summary-container"></div>
@@ -1109,7 +1183,7 @@
 
 </div><!-- /.app -->
 
-<!-- ═══ GOOGLE SHEETS MODAL ═══ -->
+<!-- GOOGLE SHEETS MODAL -->
 <div class="modal-overlay" id="sheetsModal">
   <div class="modal">
     <h3>Send to Google Sheets</h3>
@@ -1129,7 +1203,7 @@
 
 <div id="print-document"></div>
 
-<!-- ═══ SCRIPTS ═══ -->
+<!-- SCRIPTS -->
 <script src="js/state.js"></script>
 <script src="js/forms/auto.js"></script>
 <script src="js/forms/home.js"></script>
