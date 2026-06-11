@@ -59,6 +59,18 @@
     <div class="card">
       <div class="card-title">Applicant Information</div>
       <div class="card-desc">Primary named insured and contact details.</div>
+
+      <div class="existing-client-row">
+        <span class="existing-client-label">Existing Client?</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="app-existing-client" onchange="handleExistingClient()">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+        <span class="toggle-value-label" id="existing-client-val-label">No — New Client</span>
+      </div>
+
       <div class="field-grid">
         <div class="field">
           <label>First Name <span class="req">*</span></label>
@@ -68,7 +80,7 @@
           <label>Last Name <span class="req">*</span></label>
           <input type="text" id="app-last" placeholder="Smith">
         </div>
-        <div class="field">
+        <div class="field" data-new-required>
           <label>Date of Birth <span class="req">*</span></label>
           <input type="date" id="app-dob">
         </div>
@@ -92,15 +104,15 @@
 
       <div class="section-divider"><span>Mailing Address</span></div>
       <div class="field-grid">
-        <div class="field span2">
+        <div class="field span2" data-new-required>
           <label>Street Address <span class="req">*</span></label>
           <input type="text" id="app-addr1" placeholder="123 Main St">
         </div>
-        <div class="field">
+        <div class="field" data-new-required>
           <label>City <span class="req">*</span></label>
           <input type="text" id="app-city">
         </div>
-        <div class="field">
+        <div class="field" data-new-required>
           <label>State <span class="req">*</span></label>
           <select id="app-state">
             <option value="">-- Select --</option>
@@ -119,7 +131,7 @@
             <option>WI</option><option>WY</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field" data-new-required>
           <label>ZIP <span class="req">*</span></label>
           <input type="text" id="app-zip" placeholder="65000" maxlength="5">
         </div>
@@ -138,6 +150,28 @@
       </div>
       <div id="drivers-container"></div>
       <button class="btn-add" id="add-member-btn" onclick="addHouseholdMember()">+ Add Additional Household Member</button>
+
+      <div class="section-divider"><span>Reason for Policy</span></div>
+      <div class="field-grid">
+        <div class="field span2">
+          <label>Reason for Policy <span class="req">*</span></label>
+          <select id="app-reason" onchange="handlePolicyReason()">
+            <option value="">-- Select --</option>
+            <option>New Home Purchase</option>
+            <option>New Vehicle Purchase</option>
+            <option>Moving / Relocation</option>
+            <option>Life Event (Marriage / Divorce / Baby)</option>
+            <option>Rate Shopping</option>
+            <option>Renewal / Rewrite</option>
+            <option>Dropped by Prior Carrier</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field span2 hidden" id="app-reason-other-field">
+          <label>Please describe <span class="req">*</span></label>
+          <textarea id="app-reason-other" placeholder="Describe the reason for this intake..." style="min-height:80px"></textarea>
+        </div>
+      </div>
 
       <div class="section-divider"><span>Current Coverage</span></div>
       <div id="carrier-blocks-container">
