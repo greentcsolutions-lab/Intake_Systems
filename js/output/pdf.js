@@ -47,9 +47,13 @@ function buildPrintDocument() {
   }
 
   // ── APPLICANT SECTION
+  const reasonForPolicy = v('app-reason') === 'Other' ? (v('app-reason-other') || 'Other') : v('app-reason');
+  const clientType = document.getElementById('app-existing-client')?.checked ? 'Existing Client' : 'New Client';
   html += `<div class="pd-section">
     ${sectionHeader('Applicant Information')}
     <div class="pd-grid">
+      ${row('Client Type', clientType)}
+      ${row('Reason for Policy', reasonForPolicy)}
       ${row('First Name', v('app-first'))}
       ${row('Last Name', v('app-last'))}
       ${row('Date of Birth', v('app-dob'))}

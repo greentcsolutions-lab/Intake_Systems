@@ -1,4 +1,38 @@
 // ══════════════════════════════════════════
+// EXISTING CLIENT TOGGLE
+// ══════════════════════════════════════════
+function handleExistingClient() {
+  const cb = document.getElementById('app-existing-client');
+  const label = document.getElementById('existing-client-val-label');
+  const isExisting = cb.checked;
+
+  if (label) {
+    label.textContent = isExisting ? 'Yes — Existing Client' : 'No — New Client';
+    label.classList.toggle('is-existing', isExisting);
+  }
+
+  // Toggle .req spans and data-new-required fields
+  const panel = document.getElementById('step-applicant');
+  panel.querySelectorAll('[data-new-required]').forEach(fieldDiv => {
+    const reqSpan = fieldDiv.querySelector('.req');
+    if (reqSpan) reqSpan.style.display = isExisting ? 'none' : '';
+  });
+}
+
+// ══════════════════════════════════════════
+// REASON FOR POLICY
+// ══════════════════════════════════════════
+function handlePolicyReason() {
+  const val = document.getElementById('app-reason')?.value;
+  const otherField = document.getElementById('app-reason-other-field');
+  if (otherField) otherField.classList.toggle('hidden', val !== 'Other');
+  if (val !== 'Other') {
+    const ta = document.getElementById('app-reason-other');
+    if (ta) ta.value = '';
+  }
+}
+
+// ══════════════════════════════════════════
 // STEP VALIDATION
 // ══════════════════════════════════════════
 function validateStep() {
@@ -67,7 +101,27 @@ function validateStep() {
   // APPLICANT
   // ══════════════════════════════════════════
   if (key === 'applicant') {
-    scanContainer(panel);
+    const isExisting = document.getElementById('app-existing-client')?.checked;
+
+    // Always required: first name, last name, phone
+    flagById('app-first', 'First Name');
+    flagById('app-last',  'Last Name');
+    flagById('app-phone', 'Phone');
+
+    // Required only for new clients
+    if (!isExisting) {
+      flagById('app-dob',   'Date of Birth');
+      flagById('app-addr1', 'Street Address');
+      flagById('app-city',  'City');
+      flagById('app-state', 'State');
+      flagById('app-zip',   'ZIP');
+    }
+
+    // Reason for policy — always required
+    flagById('app-reason', 'Reason for Policy');
+    if (document.getElementById('app-reason')?.value === 'Other') {
+      flagById('app-reason-other', 'Reason for Policy — Description');
+    }
   }
 
   // ══════════════════════════════════════════
@@ -180,6 +234,9 @@ function collectAllData() {
   const data = {};
 
   // Applicant
+  data['Client Type'] = document.getElementById('app-existing-client')?.checked ? 'Existing Client' : 'New Client';
+  const reasonVal = val('app-reason');
+  data['Reason for Policy'] = reasonVal === 'Other' ? (val('app-reason-other') || 'Other') : reasonVal;
   data['First Name'] = val('app-first');
   data['Last Name'] = val('app-last');
   data['DOB'] = val('app-dob');
@@ -449,7 +506,7 @@ function buildReview() {
   sum.innerHTML = '';
 
   const sections = [
-    { title: 'Applicant', keys: ['First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Total Household Members','Lines of Business','Submission Date'] },
+    { title: 'Applicant', keys: ['Client Type','Reason for Policy','First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Total Household Members','Lines of Business','Submission Date'] },
     // Additional household members — dynamic
     ...Array.from({ length: state.driverCount }, (_, i) => {
       const n = i + 1;
