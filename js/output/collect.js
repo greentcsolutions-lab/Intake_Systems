@@ -11,7 +11,6 @@ function handleExistingClient() {
     label.classList.toggle('is-existing', isExisting);
   }
 
-  // Toggle .req spans and data-new-required fields
   const panel = document.getElementById('step-applicant');
   panel.querySelectorAll('[data-new-required]').forEach(fieldDiv => {
     const reqSpan = fieldDiv.querySelector('.req');
@@ -42,14 +41,15 @@ function validateStep() {
     'applicant':      'step-applicant',
     'auto-vehicles':  'step-auto-vehicles',
     'auto-coverage':  'step-auto-coverage',
+    'home-type':      'step-home-type',
+    'home-details':   'step-home-details',
+    'home-coverage':  'step-home-coverage',
     'life-product':   'step-life-product',
     'life-medicare':  'step-life-medicare',
     'life-meds':      'step-life-meds',
     'review':         'step-review',
   };
-  const panelId = panelMap[key] ||
-    (typeof LOB_META !== 'undefined' && LOB_META[key]?.step) ||
-    `step-${key}`;
+  const panelId = panelMap[key] || `step-${key}`;
   const panel = document.getElementById(panelId);
   if (!panel) return true;
 
@@ -103,12 +103,10 @@ function validateStep() {
   if (key === 'applicant') {
     const isExisting = document.getElementById('app-existing-client')?.checked;
 
-    // Always required: first name, last name, phone
     flagById('app-first', 'First Name');
     flagById('app-last',  'Last Name');
     flagById('app-phone', 'Phone');
 
-    // Required only for new clients
     if (!isExisting) {
       flagById('app-dob',   'Date of Birth');
       flagById('app-addr1', 'Street Address');
@@ -117,7 +115,6 @@ function validateStep() {
       flagById('app-zip',   'ZIP');
     }
 
-    // Reason for policy — always required
     flagById('app-reason', 'Reason for Policy');
     if (document.getElementById('app-reason')?.value === 'Other') {
       flagById('app-reason-other', 'Reason for Policy — Description');
@@ -140,7 +137,6 @@ function validateStep() {
   // AUTO — COVERAGE
   // ══════════════════════════════════════════
   else if (key === 'auto-coverage') {
-    // Comp & Coll required when Financed or Leased
     for (let i = 1; i <= state.vehicleCount; i++) {
       if (!document.getElementById(`v${i}-year`)) continue;
       const ownership = document.getElementById(`v${i}-ownership`)?.value;
@@ -154,33 +150,41 @@ function validateStep() {
         flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
       }
     }
-    // Static * fields: BI, PD, UM BI
     scanContainer(panel);
   }
 
   // ══════════════════════════════════════════
-  // AUTO (legacy single-panel fallback)
+  // HOME — TYPE
   // ══════════════════════════════════════════
-  else if (key === 'auto') {
-    // Per-vehicle: Year, Make, Model required (have * markers via addVehicle)
-    // Comp & Coll required when Financed or Leased
-    for (let i = 1; i <= state.vehicleCount; i++) {
-      if (!document.getElementById(`v${i}-year`)) continue;
-      flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
-      flagById(`v${i}-make`,  `Vehicle ${i} — Make`);
-      flagById(`v${i}-model`, `Vehicle ${i} — Model`);
-      const ownership = document.getElementById(`v${i}-ownership`)?.value;
-      if (ownership === 'Financed' || ownership === 'Leased') {
-        const vLabel = [
-          document.getElementById(`v${i}-year`)?.value,
-          document.getElementById(`v${i}-make`)?.value,
-          document.getElementById(`v${i}-model`)?.value,
-        ].filter(Boolean).join(' ') || `Vehicle ${i}`;
-        flagById(`v${i}-comp`, `${vLabel} — Comprehensive (lender required)`);
-        flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
-      }
+  else if (key === 'home-type') {
+    flagById('home-type', 'Policy Type');
+  }
+
+  // ══════════════════════════════════════════
+  // HOME — DETAILS
+  // ══════════════════════════════════════════
+  else if (key === 'home-details') {
+    const type = document.getElementById('home-type')?.value || '';
+    const isRenters = type === 'Renters (HO-4)';
+
+    // Construction type always required (affects carrier eligibility)
+    flagById('home-construction', 'Construction Type');
+
+    // Property detail fields required for non-renters
+    if (!isRenters) {
+      flagById('home-year',      'Year Built');
+      flagById('home-sqft',      'Square Footage');
+      flagById('home-roof-type', 'Roof Type');
+      flagById('home-roof-year', 'Roof Year');
+      flagById('home-foundation','Foundation Type');
+      flagById('home-stories',   'Number of Stories');
     }
-    // Static * fields: BI Liability, Property Damage
+  }
+
+  // ══════════════════════════════════════════
+  // HOME — COVERAGE
+  // ══════════════════════════════════════════
+  else if (key === 'home-coverage') {
     scanContainer(panel);
   }
 
@@ -249,6 +253,7 @@ function collectAllData() {
   data['City'] = val('app-city');
   data['State'] = val('app-state');
   data['ZIP'] = val('app-zip');
+
   // Per-LOB carrier info
   const carrierLOBs = { auto: 'Auto', home: 'Home', life: 'Life' };
   state.selectedLOBs.forEach(lob => {
@@ -269,76 +274,80 @@ function collectAllData() {
     for (let i = 1; i <= state.vehicleCount; i++) {
       const prefix = `Veh${i}`;
       if (!document.getElementById(`v${i}-year`)) continue;
-      data[`${prefix} Year`] = val(`v${i}-year`);
-      data[`${prefix} Make`] = val(`v${i}-make`);
-      data[`${prefix} Model`] = val(`v${i}-model`);
-      data[`${prefix} VIN`] = val(`v${i}-vin`);
-      data[`${prefix} Miles`] = val(`v${i}-miles`);
-      data[`${prefix} Use`] = val(`v${i}-use`);
-      data[`${prefix} Commute Days/Wk`] = val(`v${i}-commute-days`);
+      data[`${prefix} Year`]               = val(`v${i}-year`);
+      data[`${prefix} Make`]               = val(`v${i}-make`);
+      data[`${prefix} Model`]              = val(`v${i}-model`);
+      data[`${prefix} VIN`]                = val(`v${i}-vin`);
+      data[`${prefix} Miles`]              = val(`v${i}-miles`);
+      data[`${prefix} Use`]                = val(`v${i}-use`);
+      data[`${prefix} Commute Days/Wk`]    = val(`v${i}-commute-days`);
       data[`${prefix} Commute One-Way (mi)`] = val(`v${i}-commute-dist`);
-      data[`${prefix} Annual Miles`] = val(`v${i}-commute-calc`) || val(`v${i}-miles`);
-      data[`${prefix} Ownership`] = val(`v${i}-ownership`);
-      data[`${prefix} Lender`] = val(`v${i}-lender`);
-      data[`${prefix} Comp`] = val(`v${i}-comp`);
-      data[`${prefix} Glass`] = val(`v${i}-glass`) || 'No';
-      data[`${prefix} Coll`] = val(`v${i}-coll`);
-      data[`${prefix} GAP`] = val(`v${i}-gap`);
+      data[`${prefix} Annual Miles`]       = val(`v${i}-commute-calc`) || val(`v${i}-miles`);
+      data[`${prefix} Ownership`]          = val(`v${i}-ownership`);
+      data[`${prefix} Lender`]             = val(`v${i}-lender`);
+      data[`${prefix} Comp`]               = val(`v${i}-comp`);
+      data[`${prefix} Glass`]              = val(`v${i}-glass`) || 'No';
+      data[`${prefix} Coll`]               = val(`v${i}-coll`);
+      data[`${prefix} GAP`]                = val(`v${i}-gap`);
     }
     for (let i = 1; i <= state.driverCount; i++) {
       const prefix = `Member${i}`;
       if (!document.getElementById(`d${i}-first`)) continue;
-      data[`${prefix} Name`] = `${val(`d${i}-first`)} ${val(`d${i}-last`)}`;
-      data[`${prefix} DOB`] = val(`d${i}-dob`);
-      data[`${prefix} SSN`] = val(`d${i}-ssn`);
-      data[`${prefix} License`] = val(`d${i}-lic`);
+      data[`${prefix} Name`]         = `${val(`d${i}-first`)} ${val(`d${i}-last`)}`;
+      data[`${prefix} DOB`]          = val(`d${i}-dob`);
+      data[`${prefix} SSN`]          = val(`d${i}-ssn`);
+      data[`${prefix} License`]      = val(`d${i}-lic`);
       data[`${prefix} Relationship`] = val(`d${i}-rel`);
-      data[`${prefix} Accidents`] = val(`d${i}-accidents`);
-      data[`${prefix} Violations`] = val(`d${i}-violations`);
-      data[`${prefix} DUI`] = val(`d${i}-dui`);
+      data[`${prefix} Accidents`]    = val(`d${i}-accidents`);
+      data[`${prefix} Violations`]   = val(`d${i}-violations`);
+      data[`${prefix} DUI`]          = val(`d${i}-dui`);
     }
-    data['Auto BI'] = val('auto-bi');
-    data['Auto PD'] = val('auto-pd');
-    data['Auto UM BI'] = val('auto-umbi');
-    data['Auto UIM BI'] = val('auto-uimbi');
-    data['Auto MedPay'] = val('auto-medpay');
-    data['Auto Rental'] = val('auto-rental');
-
-    data['Auto SR22'] = val('auto-sr22');
+    data['Auto BI']        = val('auto-bi');
+    data['Auto PD']        = val('auto-pd');
+    data['Auto UM BI']     = val('auto-umbi');
+    data['Auto UIM BI']    = val('auto-uimbi');
+    data['Auto MedPay']    = val('auto-medpay');
+    data['Auto Rental']    = val('auto-rental');
+    data['Auto SR22']      = val('auto-sr22');
     data['Auto Rideshare'] = val('auto-rideshare');
   }
 
   // Home
   if (state.selectedLOBs.includes('home')) {
-    data['Home Type'] = val('home-type');
-    data['Home Description'] = val('home-description');
+    data['Home Type']           = val('home-type');
+    data['Home Address']        = val('home-addr');
+    data['Home Description']    = val('home-description');
     data['Directions to House'] = val('home-directions');
-    data['Purchase Date'] = val('home-purchase-date');
-    data['Home Address'] = val('home-addr');
-    data['Year Built'] = val('home-year');
-    data['Square Footage'] = val('home-sqft');
-    data['Construction'] = val('home-construction');
-    data['Roof Type'] = val('home-roof-type');
-    data['Roof Year'] = val('home-roof-year');
-    data['Pool'] = val('home-pool');
-    data['Dog'] = val('home-dog');
-    data['Dog Breed'] = val('home-dog-breed');
-    data['Smoke Detectors'] = val('home-smoke-detectors');
+    data['Construction Type']   = val('home-construction');
+    data['Purchase Date']       = val('home-purchase-date');
+    data['Year Built']          = val('home-year');
+    data['Square Footage']      = val('home-sqft');
+    data['Roof Type']           = val('home-roof-type');
+    data['Roof Year']           = val('home-roof-year');
+    data['Foundation']          = val('home-foundation');
+    data['Stories']             = val('home-stories');
+    data['Garage']              = val('home-garage');
+    data['Heating']             = val('home-heat');
+    data['Pool']                = val('home-pool');
+    data['Dog']                 = val('home-dog');
+    data['Dog Breed']           = val('home-dog-breed');
+    data['Smoke Detectors']     = val('home-smoke-detectors');
     data['Smoke Detector Type'] = val('home-smoke-type');
-    data['Fire Extinguishers'] = val('home-fire-ext');
-    data['Security Alarm'] = val('home-alarm');
-    data['Alarm Company'] = val('home-alarm-company');
-    data['Security Cameras'] = val('home-cameras');
-    data['Smart Doorbell'] = val('home-doorbell');
-    data['Deadbolt Locks'] = val('home-deadbolts');
-    data['Water Shutoff Device'] = val('home-water-shutoff');
-    data['Home Mortgage'] = val('home-lienholder');
-    data['Home Lender'] = val('home-lender-name');
-    data['Home Cov A'] = val('home-cov-a');
-    data['Home Cov C'] = val('home-cov-c');
-    data['Home Liability'] = val('home-cov-e');
-    data['Home Deductible'] = val('home-ded');
-    data['Water Backup'] = val('home-water-backup');
+    data['Fire Extinguishers']  = val('home-fire-ext');
+    data['Security Alarm']      = val('home-alarm');
+    data['Alarm Company']       = val('home-alarm-company');
+    data['Security Cameras']    = val('home-cameras');
+    data['Smart Doorbell']      = val('home-doorbell');
+    data['Deadbolt Locks']      = val('home-deadbolts');
+    data['Water Shutoff Device']= val('home-water-shutoff');
+    data['Home Mortgage']       = val('home-lienholder');
+    data['Home Lender']         = val('home-lender-name');
+    data['Home Cov A']          = val('home-cov-a');
+    data['Home Cov C']          = val('home-cov-c');
+    data['Home Liability']      = val('home-cov-e');
+    data['Home Deductible']     = val('home-ded');
+    data['Water Backup']        = val('home-water-backup');
+
     // Additional coverages
     const addCovKeys = ['earthquake','flood','guns','money','jewelry','collectibles'];
     const addCovLabels = {
@@ -354,65 +363,65 @@ function collectAllData() {
 
   // Life
   if (state.selectedLOBs.includes('life')) {
-    data['Life Product'] = val('life-type');
-    data['Life Amount'] = val('life-amount');
-    data['Life Term'] = val('life-term');
-    data['Beneficiary'] = val('life-beneficiary');
-    data['Tobacco'] = val('life-tobacco');
+    data['Life Product']       = val('life-type');
+    data['Life Amount']        = val('life-amount');
+    data['Life Term']          = val('life-term');
+    data['Beneficiary']        = val('life-beneficiary');
+    data['Tobacco']            = val('life-tobacco');
     data['Medical Conditions'] = val('life-conditions');
-    data['Life Notes'] = val('life-notes');
+    data['Life Notes']         = val('life-notes');
+
     const pcpToggled = document.getElementById('med-pcp-toggle')?.checked;
     data['Medications — PCP List'] = pcpToggled ? 'Yes — see notes for contact info' : '';
     const meds = collectMedications();
     data['Medication Count'] = meds.length > 0 ? String(meds.length) : '';
     meds.forEach((m, idx) => {
       const n = idx + 1;
-      data[`Med${n} Name`] = m.name;
-      data[`Med${n} Dosage`] = m.dosage;
+      data[`Med${n} Name`]      = m.name;
+      data[`Med${n} Dosage`]    = m.dosage;
       data[`Med${n} Frequency`] = m.freq;
       data[`Med${n} Condition`] = m.condition;
-      data[`Med${n} Duration`] = m.duration;
+      data[`Med${n} Duration`]  = m.duration;
     });
 
-    // Medicare-specific fields
     const type = val('life-type');
     const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(type);
     if (isMedicare) {
-      data['Medicare Part A & B']       = val('life-medicare-ab');
-      data['Medicare Part A Eff Date']  = val('life-medicare-parta');
-      data['Medicare Part B Eff Date']  = val('life-medicare-partb');
-      data['Medicare Claim #']          = val('life-medicare-claim');
-      data['VA Coverage']               = val('life-va');
-      data['Medicaid']                  = val('life-medicaid');
-      data['Medicaid #']                = val('life-medicaid-num');
-      data['Extra Help / LIS']          = val('life-lis');
-      data['LIS Level']                 = val('life-lis-level');
-      data['Mail Order Pharmacy']       = val('life-mail-order');
-      data['Preferred Pharmacy']        = val('life-pharmacy');
-      data['Preferred Hospital']        = val('life-hospital');
-      data['PCP Name']                  = val('life-pcp-name');
-      data['PCP Office Location']       = val('life-pcp-location');
-      data['Specialist']                = val('life-specialist');
-      data['Part D Plan']               = val('life-partd');
-      data['Part D Company']            = val('life-partd-company');
-      data['Group Coverage']            = val('life-group-cov');
-      data['Group Company']             = val('life-group-company');
-      data['Group Policy #']            = val('life-group-policy');
-      data['Group Termination Date']    = val('life-group-term');
+      data['Medicare Part A & B']      = val('life-medicare-ab');
+      data['Medicare Part A Eff Date'] = val('life-medicare-parta');
+      data['Medicare Part B Eff Date'] = val('life-medicare-partb');
+      data['Medicare Claim #']         = val('life-medicare-claim');
+      data['VA Coverage']              = val('life-va');
+      data['Medicaid']                 = val('life-medicaid');
+      data['Medicaid #']               = val('life-medicaid-num');
+      data['Extra Help / LIS']         = val('life-lis');
+      data['LIS Level']                = val('life-lis-level');
+      data['Mail Order Pharmacy']      = val('life-mail-order');
+      data['Preferred Pharmacy']       = val('life-pharmacy');
+      data['Preferred Hospital']       = val('life-hospital');
+      data['PCP Name']                 = val('life-pcp-name');
+      data['PCP Office Location']      = val('life-pcp-location');
+      data['Specialist']               = val('life-specialist');
+      data['Part D Plan']              = val('life-partd');
+      data['Part D Company']           = val('life-partd-company');
+      data['Group Coverage']           = val('life-group-cov');
+      data['Group Company']            = val('life-group-company');
+      data['Group Policy #']           = val('life-group-policy');
+      data['Group Termination Date']   = val('life-group-term');
 
       if (type === 'Medicare Supplement') {
-        data['Supp Current Company']  = val('life-supp-company');
-        data['Supp Plan Type']        = val('life-supp-plan-type');
-        data['Supp Current Premium']  = val('life-supp-premium');
-        data['Supp Renewal Date']     = val('life-supp-renewal');
+        data['Supp Current Company'] = val('life-supp-company');
+        data['Supp Plan Type']       = val('life-supp-plan-type');
+        data['Supp Current Premium'] = val('life-supp-premium');
+        data['Supp Renewal Date']    = val('life-supp-renewal');
       }
       if (type === 'Medicare Advantage') {
-        data['Adv Current Company']   = val('life-adv-company');
-        data['Adv Plan Name']         = val('life-adv-plan');
+        data['Adv Current Company'] = val('life-adv-company');
+        data['Adv Plan Name']       = val('life-adv-plan');
       }
       if (type === 'Health / ACA') {
-        data['ACA Current Company']   = val('life-aca-company');
-        data['ACA Policy #']          = val('life-aca-policy');
+        data['ACA Current Company'] = val('life-aca-company');
+        data['ACA Policy #']        = val('life-aca-policy');
       }
     }
   }
@@ -422,12 +431,10 @@ function collectAllData() {
 
 // ══════════════════════════════════════════
 // COMPUTE FLAGS  (single source of truth)
-// Called by both buildReview() and buildPrintDocument()
 // ══════════════════════════════════════════
 function computeFlags() {
   const flags = [];
 
-  // Coverage lapses (per LOB)
   const lobLabels = { auto: 'Auto', home: 'Home', life: 'Life' };
   state.selectedLOBs.forEach(lob => {
     const label = lobLabels[lob] || lob;
@@ -436,11 +443,9 @@ function computeFlags() {
     }
   });
 
-  // Auto — policy-level
   if (val('auto-sr22') === 'Yes') flags.push('SR-22 required — confirm carrier filing');
   if (val('auto-rideshare') === 'Yes') flags.push('Rideshare use — verify endorsement');
 
-  // Auto — per vehicle
   for (let i = 1; i <= state.vehicleCount; i++) {
     if (!document.getElementById(`v${i}-year`)) continue;
     const own = val(`v${i}-ownership`);
@@ -450,7 +455,6 @@ function computeFlags() {
     }
   }
 
-  // Household members — incident history
   for (let i = 1; i <= state.driverCount; i++) {
     if (!document.getElementById(`d${i}-first`)) continue;
     const acc = parseInt(val(`d${i}-accidents`));
@@ -462,7 +466,6 @@ function computeFlags() {
     }
   }
 
-  // Home
   if (val('home-pool') === 'Yes - Unfenced') flags.push('Unfenced pool — liability risk');
   if (val('home-knob-tube') === 'Yes') flags.push('Knob & tube wiring — verify eligibility');
   if (val('home-fuse') === 'Yes') flags.push('Fuse box — some carriers restrict');
@@ -472,7 +475,6 @@ function computeFlags() {
     flags.push('Roof age 15+ years — may require inspection');
   }
 
-  // Life
   if (val('life-tobacco') === 'Yes') flags.push('Tobacco use — smoker rates apply');
 
   return flags;
@@ -501,24 +503,21 @@ function buildReview() {
     flagsDiv.innerHTML = `<div class="alert alert-info" style="margin-bottom:20px"><div class="alert-icon">✅</div><div><strong>No flags detected.</strong> Intake looks clean.</div></div>`;
   }
 
-  // Summary
   const sum = document.getElementById('summary-container');
   sum.innerHTML = '';
 
   const sections = [
     { title: 'Applicant', keys: ['Client Type','Reason for Policy','First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Total Household Members','Lines of Business','Submission Date'] },
-    // Additional household members — dynamic
     ...Array.from({ length: state.driverCount }, (_, i) => {
       const n = i + 1;
-      return { title: `Household Member ${n}`, keys: [`Member${n} Name`, `Member${n} DOB`, `Member${n} SSN`, `Member${n} License`, `Member${n} Relationship`, `Member${n} Accidents`, `Member${n} Violations`, `Member${n} DUI`] };
+      return { title: `Household Member ${n}`, keys: [`Member${n} Name`,`Member${n} DOB`,`Member${n} SSN`,`Member${n} License`,`Member${n} Relationship`,`Member${n} Accidents`,`Member${n} Violations`,`Member${n} DUI`] };
     }),
     ...state.selectedLOBs.map(lob => {
       const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;
-      return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`, `${l} Carrier Name`, `${l} Policy Number`, `${l} Expiration Date`, `${l} Current Premium`, `${l} Lapse Reason`] };
+      return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`,`${l} Carrier Name`,`${l} Policy Number`,`${l} Expiration Date`,`${l} Current Premium`,`${l} Lapse Reason`] };
     }),
     ...(state.selectedLOBs.includes('auto') ? [{ title: 'Personal Auto — Coverage', keys: ['Auto BI','Auto PD','Auto UM BI','Auto UIM BI','Auto MedPay','Auto Rental','Auto SR22','Auto Rideshare'] }] : []),
-    ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Purchase Date','Year Built','Square Footage','Construction','Roof Type','Roof Year','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
-    ...(state.selectedLOBs.includes('bop') ? [{ title: 'BOP', keys: ['Biz Name','Biz Revenue','Biz Employees','BOP GL','BOP Building','BOP BPP'] }] : []),
+    ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Home Address','Construction Type','Purchase Date','Year Built','Square Footage','Roof Type','Roof Year','Foundation','Stories','Garage','Heating','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
     ...(state.selectedLOBs.includes('life') ? (() => {
       const type = val('life-type');
       const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(type);
