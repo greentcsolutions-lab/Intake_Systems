@@ -31,12 +31,30 @@ function addHomeLoss() {
   c.appendChild(div);
 }
 
-
 // ══════════════════════════════════════════
 // REMOVE ITEM
 // ══════════════════════════════════════════
 function removeItem(id) {
   document.getElementById(id)?.remove();
+}
+
+// ══════════════════════════════════════════
+// HOME TYPE → DETAILS VISIBILITY
+// Called by renderStep() when entering home-details,
+// and by the home-type onchange handler on the type screen.
+// ══════════════════════════════════════════
+function applyHomeTypeToDetails() {
+  const type = document.getElementById('home-type')?.value || '';
+  const isRenters = type === 'Renters (HO-4)';
+  const isHO3     = type === 'Homeowners (HO-3)';
+
+  // Owner-only fields (property structure details)
+  const ownerFields = document.getElementById('owner-fields');
+  if (ownerFields) ownerFields.style.display = isRenters ? 'none' : 'block';
+
+  // Purchase date only for HO-3
+  const purchaseDateField = document.getElementById('home-purchase-date-field');
+  if (purchaseDateField) purchaseDateField.style.display = isHO3 ? 'block' : 'none';
 }
 
 // ══════════════════════════════════════════
@@ -48,17 +66,10 @@ function checkRideshare() {
 }
 
 document.getElementById('auto-sr22')?.addEventListener('change', function() {
-  document.getElementById('sr22-reason-field')?.style && (document.getElementById('sr22-reason-field').style.display = this.value === 'Yes' ? 'block' : 'none');
+  document.getElementById('sr22-reason-field')?.style &&
+    (document.getElementById('sr22-reason-field').style.display = this.value === 'Yes' ? 'block' : 'none');
   document.getElementById('sr22-alert')?.classList.toggle('hidden', this.value !== 'Yes');
 });
-
-function handleHomeType() {
-  const val = document.getElementById('home-type').value;
-  const ownerFields = document.getElementById('owner-fields');
-  ownerFields.style.display = val === 'Renters (HO-4)' ? 'none' : 'block';
-  const purchaseDateField = document.getElementById('home-purchase-date-field');
-  if (purchaseDateField) purchaseDateField.style.display = val === 'Homeowners (HO-3)' ? 'block' : 'none';
-}
 
 function handleHomeLienholder() {
   const val = document.getElementById('home-lienholder').value;
@@ -72,16 +83,20 @@ function checkRoofAge() {
 }
 
 function checkKnobTube() {
-  document.getElementById('knob-tube-alert')?.classList.toggle('hidden', document.getElementById('home-knob-tube').value !== 'Yes');
+  document.getElementById('knob-tube-alert')?.classList.toggle('hidden',
+    document.getElementById('home-knob-tube').value !== 'Yes');
 }
 function checkFuseBox() {
-  document.getElementById('fuse-box-alert')?.classList.toggle('hidden', document.getElementById('home-fuse').value !== 'Yes');
+  document.getElementById('fuse-box-alert')?.classList.toggle('hidden',
+    document.getElementById('home-fuse').value !== 'Yes');
 }
 function checkPool() {
-  document.getElementById('pool-alert')?.classList.toggle('hidden', document.getElementById('home-pool').value !== 'Yes - Unfenced');
+  document.getElementById('pool-alert')?.classList.toggle('hidden',
+    document.getElementById('home-pool').value !== 'Yes - Unfenced');
 }
 function checkTrampoline() {
-  document.getElementById('trampoline-alert')?.classList.toggle('hidden', document.getElementById('home-trampoline').value !== 'Yes - Open');
+  document.getElementById('trampoline-alert')?.classList.toggle('hidden',
+    document.getElementById('home-trampoline').value !== 'Yes - Open');
 }
 function checkDog() {
   const v = document.getElementById('home-dog').value;
@@ -89,7 +104,8 @@ function checkDog() {
   document.getElementById('dog-alert')?.classList.toggle('hidden', v !== 'Yes');
 }
 function checkHomeBusiness() {
-  document.getElementById('home-business-alert')?.classList.toggle('hidden', document.getElementById('home-business').value !== 'Yes');
+  document.getElementById('home-business-alert')?.classList.toggle('hidden',
+    document.getElementById('home-business').value !== 'Yes');
 }
 
 function handleHomeAlarm() {
@@ -97,11 +113,10 @@ function handleHomeAlarm() {
   const field = document.getElementById('home-alarm-company-field');
   if (field) field.style.display = val && val !== 'No' ? 'block' : 'none';
 }
-function checkJewelry() {
-  // No-op: jewelry is now handled by the Additional Coverages checklist
-}
+
 function checkTobacco() {
-  document.getElementById('tobacco-alert')?.classList.toggle('hidden', document.getElementById('life-tobacco').value !== 'Yes');
+  document.getElementById('tobacco-alert')?.classList.toggle('hidden',
+    document.getElementById('life-tobacco').value !== 'Yes');
 }
 
 function toggleAddCov(key) {
