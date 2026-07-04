@@ -23,8 +23,7 @@ function handleExistingClient() {
 // ══════════════════════════════════════════
 function handlePolicyReason() {
   const val = document.getElementById('app-reason')?.value;
-  const otherField = document.getElementById('app-reason-other-field');
-  if (otherField) otherField.classList.toggle('hidden', val !== 'Other');
+  toggleGatePanel(document.getElementById('app-reason-other-panel'), val === 'Other');
   if (val !== 'Other') {
     const ta = document.getElementById('app-reason-other');
     if (ta) ta.value = '';

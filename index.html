@@ -152,24 +152,30 @@
       <button class="btn-add" id="add-member-btn" onclick="addHouseholdMember()">+ Add Additional Household Member</button>
 
       <div class="section-divider"><span>Reason for Policy</span></div>
-      <div class="field-grid">
-        <div class="field span2">
-          <label>Reason for Policy <span class="req">*</span></label>
-          <select id="app-reason" onchange="handlePolicyReason()">
-            <option value="">-- Select --</option>
-            <option>New Home Purchase</option>
-            <option>New Vehicle Purchase</option>
-            <option>Moving / Relocation</option>
-            <option>Life Event (Marriage / Divorce / Baby)</option>
-            <option>Rate Shopping</option>
-            <option>Renewal / Rewrite</option>
-            <option>Dropped by Prior Carrier</option>
-            <option>Other</option>
-          </select>
+      <div class="gate-card">
+        <div class="gate-question">
+          <div class="field">
+            <label>Reason for Policy <span class="req">*</span></label>
+            <select id="app-reason" onchange="handlePolicyReason()">
+              <option value="">-- Select --</option>
+              <option>New Home Purchase</option>
+              <option>New Vehicle Purchase</option>
+              <option>Moving / Relocation</option>
+              <option>Life Event (Marriage / Divorce / Baby)</option>
+              <option>Rate Shopping</option>
+              <option>Renewal / Rewrite</option>
+              <option>Dropped by Prior Carrier</option>
+              <option>Other</option>
+            </select>
+          </div>
         </div>
-        <div class="field span2 hidden" id="app-reason-other-field">
-          <label>Please describe <span class="req">*</span></label>
-          <textarea id="app-reason-other" placeholder="Describe the reason for this intake..." style="min-height:80px"></textarea>
+        <div class="gate-panel hidden" id="app-reason-other-panel">
+          <div class="gate-panel-inner">
+            <div class="field">
+              <label>Please describe <span class="req">*</span></label>
+              <textarea id="app-reason-other" placeholder="Describe the reason for this intake..." style="min-height:80px"></textarea>
+            </div>
+          </div>
         </div>
       </div>
 
