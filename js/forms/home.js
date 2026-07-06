@@ -65,12 +65,6 @@ function checkRideshare() {
   document.getElementById('rideshare-alert')?.classList.toggle('hidden', v !== 'Yes');
 }
 
-document.getElementById('auto-sr22')?.addEventListener('change', function() {
-  document.getElementById('sr22-reason-field')?.style &&
-    (document.getElementById('sr22-reason-field').style.display = this.value === 'Yes' ? 'block' : 'none');
-  document.getElementById('sr22-alert')?.classList.toggle('hidden', this.value !== 'Yes');
-});
-
 function handleHomeLienholder() {
   const val = document.getElementById('home-lienholder').value;
   document.getElementById('home-lienholder-block').style.display = val === 'Yes' ? 'block' : 'none';

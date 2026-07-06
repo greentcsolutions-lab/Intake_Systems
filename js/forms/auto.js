@@ -27,31 +27,33 @@ function addVehicle() {
       </div>
       <div class="field"><label>Annual Miles <span class="flag">⚡ auto-calculated for commute</span></label><input type="number" id="v${n}-miles" placeholder="12000"></div>
     </div>
-    <div id="v${n}-commute-block" style="display:none;margin-top:12px">
-      <div class="alert alert-info" style="margin-bottom:12px">
-        <div class="alert-icon">ℹ️</div>
-        <div><strong>Commute Details Required</strong> Days per week commuted and one-way distance are used to calculate annual mileage for rating.</div>
+    <div class="gate-panel hidden" id="v${n}-commute-block">
+      <div class="gate-panel-inner">
+        <div class="alert alert-info" style="margin-bottom:12px">
+          <div class="alert-icon">ℹ️</div>
+          <div><strong>Commute Details Required</strong> Days per week commuted and one-way distance are used to calculate annual mileage for rating.</div>
+        </div>
+        <div class="field-grid three">
+          <div class="field">
+            <label>Days/Week Commuting</label>
+            <select id="v${n}-commute-days" onchange="calcCommuteMiles(${n})">
+              <option value="">-- Select --</option>
+              <option value="1">1 day</option><option value="2">2 days</option>
+              <option value="3">3 days</option><option value="4">4 days</option>
+              <option value="5">5 days</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>One-Way Distance (miles)</label>
+            <input type="number" id="v${n}-commute-dist" placeholder="15" min="1" oninput="calcCommuteMiles(${n})">
+          </div>
+          <div class="field">
+            <label>Calculated Annual Miles</label>
+            <input type="number" id="v${n}-commute-calc" placeholder="—" readonly style="background:var(--cream-dark);color:var(--navy);font-weight:600;">
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Formula: (days × 2 × distance × 50 weeks) + estimated personal use</div>
       </div>
-      <div class="field-grid three">
-        <div class="field">
-          <label>Days/Week Commuting</label>
-          <select id="v${n}-commute-days" onchange="calcCommuteMiles(${n})">
-            <option value="">-- Select --</option>
-            <option value="1">1 day</option><option value="2">2 days</option>
-            <option value="3">3 days</option><option value="4">4 days</option>
-            <option value="5">5 days</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>One-Way Distance (miles)</label>
-          <input type="number" id="v${n}-commute-dist" placeholder="15" min="1" oninput="calcCommuteMiles(${n})">
-        </div>
-        <div class="field">
-          <label>Calculated Annual Miles</label>
-          <input type="number" id="v${n}-commute-calc" placeholder="—" readonly style="background:var(--cream-dark);color:var(--navy);font-weight:600;">
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">Formula: (days × 2 × distance × 50 weeks) + estimated personal use</div>
     </div>
     <div class="field-grid three" style="margin-top:12px">
       <div class="field"><label>Ownership</label>
@@ -62,15 +64,17 @@ function addVehicle() {
         </select>
       </div>
     </div>
-    <div id="v${n}-lien-block" style="display:none;margin-top:12px">
-      <div class="alert alert-warn" style="margin-bottom:12px">
-        <div class="alert-icon">⚠️</div>
-        <div><strong>Lienholder / Lease</strong> Comp & Collision <strong>required</strong>. Deductible typically capped at $500 by lender. Verify GAP coverage.</div>
-      </div>
-      <div class="field-grid">
-        <div class="field"><label>Lender / Leasing Co.</label><input type="text" id="v${n}-lender"></div>
-        <div class="field"><label>Loan / Lease #</label><input type="text" id="v${n}-loan-num"></div>
-        <div class="field span2"><label>Lender Address</label><input type="text" id="v${n}-lender-addr"></div>
+    <div class="gate-panel hidden" id="v${n}-lien-block">
+      <div class="gate-panel-inner">
+        <div class="alert alert-warn" style="margin-bottom:12px">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>Lienholder / Lease</strong> Comp & Collision <strong>required</strong>. Deductible typically capped at $500 by lender. Verify GAP coverage.</div>
+        </div>
+        <div class="field-grid">
+          <div class="field"><label>Lender / Leasing Co.</label><input type="text" id="v${n}-lender"></div>
+          <div class="field"><label>Loan / Lease #</label><input type="text" id="v${n}-loan-num"></div>
+          <div class="field span2"><label>Lender Address</label><input type="text" id="v${n}-lender-addr"></div>
+        </div>
       </div>
     </div>`;
   c.appendChild(div);
@@ -92,7 +96,7 @@ function handleVehicleUse(n) {
   const block = document.getElementById(`v${n}-commute-block`);
   if (!block) return;
   const isCommute = use === 'Commute';
-  block.style.display = isCommute ? 'block' : 'none';
+  toggleGatePanel(block, isCommute);
   if (!isCommute) {
     // Clear commute calc when switching away
     const calcEl = document.getElementById(`v${n}-commute-calc`);
@@ -119,7 +123,7 @@ function calcCommuteMiles(n) {
 function handleLienholder(n) {
   const val = document.getElementById(`v${n}-ownership`).value;
   const block = document.getElementById(`v${n}-lien-block`);
-  block.style.display = (val === 'Financed' || val === 'Leased') ? 'block' : 'none';
+  toggleGatePanel(block, val === 'Financed' || val === 'Leased');
   refreshVehicleCovBlocks();
   checkLienholderAlert();
 }
@@ -129,11 +133,18 @@ function handleGlass(n) {
   const glassField = document.getElementById(`v${n}-glass-field`);
   if (!glassField) return;
   const hasComp = comp && comp !== 'None' && comp !== '';
-  glassField.style.display = hasComp ? 'block' : 'none';
+  toggleGatePanel(glassField, hasComp);
   if (!hasComp) {
     const glassEl = document.getElementById(`v${n}-glass`);
     if (glassEl) glassEl.value = 'No';
   }
+}
+
+function handleSR22() {
+  const val = document.getElementById('auto-sr22')?.value;
+  const isYes = val === 'Yes';
+  toggleGatePanel(document.getElementById('sr22-panel'), isYes);
+  document.getElementById('sr22-alert')?.classList.toggle('hidden', !isYes);
 }
 
 function checkLienholderAlert() {
@@ -167,6 +178,13 @@ function refreshVehicleCovBlocks() {
     block.style.marginTop = '12px';
     block.innerHTML = `
       <div class="repeater-title" style="margin-bottom:14px">${label} — Physical Damage</div>
+      <div class="field" style="margin-bottom:16px">
+        <label>Storage / Non-Operational? <span class="flag">⚡ liability does not apply to this vehicle</span></label>
+        <select id="v${i}-storage" onchange="updateStorageNote()">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
       <div class="field-grid">
         <div class="field">
           <label>Comprehensive ${req}${flag}</label>
@@ -174,13 +192,6 @@ function refreshVehicleCovBlocks() {
             <option value="">None</option>
             <option>$100 ded</option><option>$250 ded</option>
             <option>$500 ded</option><option>$1,000 ded</option>
-          </select>
-        </div>
-        <div class="field" id="v${i}-glass-field" style="display:none">
-          <label>Glass Coverage</label>
-          <select id="v${i}-glass">
-            <option value="No">No</option>
-            <option value="Yes">Yes</option>
           </select>
         </div>
         <div class="field">
@@ -203,9 +214,40 @@ function refreshVehicleCovBlocks() {
             <option value="No">No</option><option value="Yes">Yes</option>
           </select>
         </div>
+      </div>
+      <div class="gate-panel hidden" id="v${i}-glass-field">
+        <div class="gate-panel-inner">
+          <div class="field">
+            <label>Glass Coverage</label>
+            <select id="v${i}-glass">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
       </div>`;
     container.appendChild(block);
   }
+  updateStorageNote();
+}
+
+function updateStorageNote() {
+  const note = document.getElementById('storage-vehicles-note');
+  const list = document.getElementById('storage-vehicles-list');
+  if (!note || !list) return;
+  const stored = [];
+  for (let i = 1; i <= state.vehicleCount; i++) {
+    if (document.getElementById(`v${i}-storage`)?.value === 'Yes') {
+      const label = [
+        document.getElementById(`v${i}-year`)?.value,
+        document.getElementById(`v${i}-make`)?.value,
+        document.getElementById(`v${i}-model`)?.value,
+      ].filter(Boolean).join(' ') || `Vehicle ${i}`;
+      stored.push(label);
+    }
+  }
+  note.classList.toggle('hidden', stored.length === 0);
+  list.textContent = stored.join(', ');
 }
 
 // ══════════════════════════════════════════

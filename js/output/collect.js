@@ -284,6 +284,7 @@ function collectAllData() {
       data[`${prefix} Annual Miles`]       = val(`v${i}-commute-calc`) || val(`v${i}-miles`);
       data[`${prefix} Ownership`]          = val(`v${i}-ownership`);
       data[`${prefix} Lender`]             = val(`v${i}-lender`);
+      data[`${prefix} Storage/Non-Op`]     = val(`v${i}-storage`) || 'No';
       data[`${prefix} Comp`]               = val(`v${i}-comp`);
       data[`${prefix} Glass`]              = val(`v${i}-glass`) || 'No';
       data[`${prefix} Coll`]               = val(`v${i}-coll`);
@@ -451,6 +452,10 @@ function computeFlags() {
     if (own === 'Financed' || own === 'Leased') {
       const vLabel = [val(`v${i}-year`), val(`v${i}-make`), val(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`;
       flags.push(`${vLabel}: Lienholder — Comp/Coll required`);
+    }
+    if (val(`v${i}-storage`) === 'Yes') {
+      const vLabel = [val(`v${i}-year`), val(`v${i}-make`), val(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`;
+      flags.push(`${vLabel}: Storage/non-operational — confirm no liability is being charged`);
     }
   }
 

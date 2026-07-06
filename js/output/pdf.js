@@ -102,6 +102,7 @@ function buildPrintDocument() {
       const label = [v(`v${i}-year`), v(`v${i}-make`), v(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`;
       const isLien = v(`v${i}-ownership`) === 'Financed' || v(`v${i}-ownership`) === 'Leased';
       const isCommute = v(`v${i}-use`) === 'Commute';
+      const isStorage = v(`v${i}-storage`) === 'Yes';
       html += `${subHeader(`Vehicle ${i} — ${label}`)}
       <div class="pd-grid">
         ${row('VIN', v(`v${i}-vin`))}
@@ -112,6 +113,7 @@ function buildPrintDocument() {
         ${isCommute ? row('One-Way Distance', v(`v${i}-commute-dist`) ? v(`v${i}-commute-dist`) + ' mi' : '') : ''}
         ${row('Ownership', v(`v${i}-ownership`), isLien)}
         ${row('Lender', v(`v${i}-lender`))}
+        ${row('Storage / Non-Operational', v(`v${i}-storage`) || 'No', isStorage)}
         ${row('Comp Deductible', v(`v${i}-comp`))}
           ${row('Glass Coverage', v(`v${i}-glass`))}
         ${row('Coll Deductible', v(`v${i}-coll`))}
@@ -139,7 +141,14 @@ function buildPrintDocument() {
     }
 
     // Coverage
+    const storageVehicles = [];
+    for (let i = 1; i <= state.vehicleCount; i++) {
+      if (v(`v${i}-storage`) === 'Yes') {
+        storageVehicles.push([v(`v${i}-year`), v(`v${i}-make`), v(`v${i}-model`)].filter(Boolean).join(' ') || `Vehicle ${i}`);
+      }
+    }
     html += `${subHeader('Coverage Selections')}
+    ${storageVehicles.length ? rowFull('⚠ Storage / Non-Operational (liability N/A)', storageVehicles.join(', ')) : ''}
     <div class="pd-grid">
       ${row('Bodily Injury', v('auto-bi'))}
       ${row('Property Damage', v('auto-pd'))}

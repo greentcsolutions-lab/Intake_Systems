@@ -208,16 +208,11 @@
       <div class="card-title">🚗 Auto Coverage</div>
       <div class="card-desc">Select liability limits and physical damage coverage for each vehicle.</div>
 
-      <div class="section-divider"><span>Physical Damage</span></div>
-      <div id="comprehensive-collision-block">
-        <div id="comp-coll-alert" class="alert alert-warn hidden">
-          <div class="alert-icon">⚠️</div>
-          <div><strong>Lienholder / Lease Detected</strong> Comprehensive and Collision coverage are <strong>required</strong> by lenders. Deductibles must be within lender guidelines (typically $500 max).</div>
-        </div>
-        <div id="vehicles-cov-container"></div>
-      </div>
-
       <div class="section-divider"><span>Liability &amp; Additional Coverage</span></div>
+      <div id="storage-vehicles-note" class="alert alert-info hidden" style="margin-bottom:14px">
+        <div class="alert-icon">ℹ️</div>
+        <div><strong>Storage / Non-Operational Vehicles</strong> Liability does not apply to: <span id="storage-vehicles-list"></span></div>
+      </div>
       <div class="field-grid">
         <div class="field">
           <label>Bodily Injury Liability <span class="req">*</span></label>
@@ -279,21 +274,38 @@
         </div>
       </div>
 
+      <div class="section-divider"><span>Physical Damage</span></div>
+      <div id="comprehensive-collision-block">
+        <div id="comp-coll-alert" class="alert alert-warn hidden">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>Lienholder / Lease Detected</strong> Comprehensive and Collision coverage are <strong>required</strong> by lenders. Deductibles must be within lender guidelines (typically $500 max).</div>
+        </div>
+        <div id="vehicles-cov-container"></div>
+      </div>
+
       <div class="section-divider"><span>Additional Questions</span></div>
+      <div class="gate-card">
+        <div class="gate-question">
+          <div class="field">
+            <label>SR-22 Required?</label>
+            <select id="auto-sr22" onchange="handleSR22()">
+              <option value="No">No</option><option value="Yes">Yes</option>
+            </select>
+          </div>
+        </div>
+        <div class="gate-panel hidden" id="sr22-panel">
+          <div class="gate-panel-inner">
+            <div class="field">
+              <label>SR-22 Reason</label>
+              <select id="auto-sr22-reason">
+                <option>DUI/DWI</option><option>Suspended License</option>
+                <option>Uninsured Accident</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="field-grid">
-        <div class="field">
-          <label>SR-22 Required?</label>
-          <select id="auto-sr22">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field" id="sr22-reason-field" style="display:none">
-          <label>SR-22 Reason</label>
-          <select id="auto-sr22-reason">
-            <option>DUI/DWI</option><option>Suspended License</option>
-            <option>Uninsured Accident</option><option>Other</option>
-          </select>
-        </div>
         <div class="field">
           <label>Rideshare (Uber/Lyft)?</label>
           <select id="auto-rideshare" onchange="checkRideshare()">
