@@ -22,6 +22,7 @@
     background: var(--cream);
     color: var(--text);
     min-height: 100vh;
+    zoom: 1.15;
   }
 
   /* ── HEADER ── */
@@ -571,35 +572,6 @@
     font-weight: 600;
   }
 
-  /* ── GATE CARD (conditional-field micro-cards) ── */
-  .gate-card {
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
-    margin-bottom: 14px;
-    background: var(--cream);
-    transition: border-color 0.25s ease;
-  }
-  .gate-card:has(.gate-panel.open) {
-    border-color: var(--gold);
-  }
-  .gate-question .field { margin-bottom: 0; }
-  .gate-panel {
-    display: grid;
-    grid-template-rows: 0fr;
-    opacity: 0;
-    transition: grid-template-rows 0.3s ease, opacity 0.25s ease;
-  }
-  .gate-panel.open {
-    grid-template-rows: 1fr;
-    opacity: 1;
-  }
-  .gate-panel-inner {
-    overflow: hidden;
-    min-height: 0;
-    padding-top: 16px;
-  }
-
   /* ── VALIDATION ERRORS ── */
   .field-error input,
   .field-error select,
@@ -644,7 +616,7 @@
     header, .step-nav, .progress-bar-wrap, .progress-label, .btn-row, .output-grid,
     .btn-add, .btn-remove, .app, #step-review, .modal-overlay { display: none !important; }
     body { background: white; margin: 0; }
-    #print-document { display: block !important; }
+    #print-document { display: block !important; zoom: 1; }
   }
 
   /* ── PRINT DOCUMENT (hidden on screen) ── */
