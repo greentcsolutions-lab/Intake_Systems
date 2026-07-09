@@ -112,6 +112,15 @@ function validateStep() {
       flagById('app-city',  'City');
       flagById('app-state', 'State');
       flagById('app-zip',   'ZIP');
+      flagById('app-occupation', 'Occupation');
+      flagById('app-education',  'Education');
+
+      for (let i = 1; i <= state.driverCount; i++) {
+        if (document.getElementById(`d${i}-second-insured`)?.value === 'Yes') {
+          flagById(`d${i}-occupation`, `Household Member ${i} — Occupation (Second Named Insured)`);
+          flagById(`d${i}-education`,  `Household Member ${i} — Education (Second Named Insured)`);
+        }
+      }
     }
 
     flagById('app-reason', 'Reason for Policy');
@@ -247,6 +256,8 @@ function collectAllData() {
   data['Phone'] = val('app-phone');
   data['Email'] = val('app-email');
   data['Referred By'] = val('app-referred-by');
+  data['Occupation'] = val('app-occupation');
+  data['Education'] = val('app-education');
   data['Total Household Members'] = val('app-household-total');
   data['Address'] = val('app-addr1');
   data['City'] = val('app-city');
@@ -267,6 +278,25 @@ function collectAllData() {
   data['Lines of Business'] = state.selectedLOBs.join(', ');
   data['Submission Date'] = new Date().toLocaleDateString();
   data['Submission Time'] = new Date().toLocaleTimeString();
+
+  // Household Members — account-level, collected regardless of selected LOBs
+  for (let i = 1; i <= state.driverCount; i++) {
+    const prefix = `Member${i}`;
+    if (!document.getElementById(`d${i}-first`)) continue;
+    data[`${prefix} Name`]         = `${val(`d${i}-first`)} ${val(`d${i}-last`)}`;
+    data[`${prefix} DOB`]          = val(`d${i}-dob`);
+    data[`${prefix} SSN`]          = val(`d${i}-ssn`);
+    data[`${prefix} License`]      = val(`d${i}-lic`);
+    data[`${prefix} Relationship`] = val(`d${i}-rel`);
+    data[`${prefix} Accidents`]    = val(`d${i}-accidents`);
+    data[`${prefix} Violations`]   = val(`d${i}-violations`);
+    data[`${prefix} DUI`]          = val(`d${i}-dui`);
+    data[`${prefix} Second Named Insured`] = val(`d${i}-second-insured`);
+    if (val(`d${i}-second-insured`) === 'Yes') {
+      data[`${prefix} Occupation`] = val(`d${i}-occupation`);
+      data[`${prefix} Education`]  = val(`d${i}-education`);
+    }
+  }
 
   // Auto
   if (state.selectedLOBs.includes('auto')) {
@@ -289,18 +319,6 @@ function collectAllData() {
       data[`${prefix} Glass`]              = val(`v${i}-glass`) || 'No';
       data[`${prefix} Coll`]               = val(`v${i}-coll`);
       data[`${prefix} GAP`]                = val(`v${i}-gap`);
-    }
-    for (let i = 1; i <= state.driverCount; i++) {
-      const prefix = `Member${i}`;
-      if (!document.getElementById(`d${i}-first`)) continue;
-      data[`${prefix} Name`]         = `${val(`d${i}-first`)} ${val(`d${i}-last`)}`;
-      data[`${prefix} DOB`]          = val(`d${i}-dob`);
-      data[`${prefix} SSN`]          = val(`d${i}-ssn`);
-      data[`${prefix} License`]      = val(`d${i}-lic`);
-      data[`${prefix} Relationship`] = val(`d${i}-rel`);
-      data[`${prefix} Accidents`]    = val(`d${i}-accidents`);
-      data[`${prefix} Violations`]   = val(`d${i}-violations`);
-      data[`${prefix} DUI`]          = val(`d${i}-dui`);
     }
     data['Auto BI']        = val('auto-bi');
     data['Auto PD']        = val('auto-pd');
@@ -511,10 +529,10 @@ function buildReview() {
   sum.innerHTML = '';
 
   const sections = [
-    { title: 'Applicant', keys: ['Client Type','Reason for Policy','First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Total Household Members','Lines of Business','Submission Date'] },
+    { title: 'Applicant', keys: ['Client Type','Reason for Policy','First Name','Last Name','DOB','Phone','Email','Address','City','State','ZIP','Referred By','Occupation','Education','Total Household Members','Lines of Business','Submission Date'] },
     ...Array.from({ length: state.driverCount }, (_, i) => {
       const n = i + 1;
-      return { title: `Household Member ${n}`, keys: [`Member${n} Name`,`Member${n} DOB`,`Member${n} SSN`,`Member${n} License`,`Member${n} Relationship`,`Member${n} Accidents`,`Member${n} Violations`,`Member${n} DUI`] };
+      return { title: `Household Member ${n}`, keys: [`Member${n} Name`,`Member${n} DOB`,`Member${n} SSN`,`Member${n} License`,`Member${n} Relationship`,`Member${n} Accidents`,`Member${n} Violations`,`Member${n} DUI`,`Member${n} Second Named Insured`,`Member${n} Occupation`,`Member${n} Education`] };
     }),
     ...state.selectedLOBs.map(lob => {
       const l = { auto: 'Auto', home: 'Home', life: 'Life' }[lob] || lob;

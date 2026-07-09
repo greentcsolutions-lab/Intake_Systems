@@ -254,6 +254,12 @@ function updateStorageNote() {
 // HOUSEHOLD MEMBER REPEATER (additional members beyond applicant)
 // Max 5 additional (6 total including applicant)
 // ══════════════════════════════════════════
+const EDUCATION_OPTIONS_HTML = [
+  'Less than High School', 'High School / GED', 'Some College',
+  "Associate's Degree", "Bachelor's Degree", "Master's Degree",
+  'Doctorate / Professional Degree',
+].map(o => `<option>${o}</option>`).join('');
+
 function addHouseholdMember() {
   if (state.driverCount >= 5) return; // max 5 additional
   state.driverCount++;
@@ -321,6 +327,32 @@ function addHouseholdMember() {
     <div id="d${n}-age-alert" class="alert alert-warn hidden" style="margin-top:10px">
       <div class="alert-icon">⚠️</div>
       <div><strong>Young Driver</strong> Drivers under 25 typically rated significantly higher. Confirm discount eligibility (good student, driver training).</div>
+    </div>
+    <div class="section-divider" style="margin:16px 0 12px"><span>Second Named Insured</span></div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Second Named Insured on Policy?</label>
+        <select id="d${n}-second-insured" onchange="toggleSecondNamedInsured(${n})">
+          <option value="No">No</option><option value="Yes">Yes</option>
+        </select>
+      </div>
+    </div>
+    <div class="gate-panel hidden" id="d${n}-second-insured-block">
+      <div class="gate-panel-inner">
+        <div class="field-grid">
+          <div class="field" data-new-required>
+            <label>Occupation <span class="req">*</span></label>
+            <input type="text" id="d${n}-occupation" placeholder="e.g. Registered Nurse">
+          </div>
+          <div class="field" data-new-required>
+            <label>Education <span class="req">*</span></label>
+            <select id="d${n}-education">
+              <option value="">-- Select --</option>
+              ${EDUCATION_OPTIONS_HTML}
+            </select>
+          </div>
+        </div>
+      </div>
     </div>`;
   c.appendChild(div);
 
@@ -337,6 +369,32 @@ function removeMember(id) {
   // Re-show button if under limit
   const btn = document.getElementById('add-member-btn');
   if (btn) btn.style.display = '';
+}
+
+function toggleSecondNamedInsured(n) {
+  const val = document.getElementById(`d${n}-second-insured`)?.value;
+  const isYes = val === 'Yes';
+
+  // Enforce "only one" — clear every other member's toggle when this one is set to Yes
+  if (isYes) {
+    for (let i = 1; i <= state.driverCount; i++) {
+      if (i === n) continue;
+      const otherSelect = document.getElementById(`d${i}-second-insured`);
+      if (otherSelect && otherSelect.value === 'Yes') {
+        otherSelect.value = 'No';
+        toggleSecondNamedInsured(i);
+      }
+    }
+  }
+
+  const block = document.getElementById(`d${n}-second-insured-block`);
+  if (block) toggleGatePanel(block, isYes);
+  if (!isYes) {
+    const occEl = document.getElementById(`d${n}-occupation`);
+    const eduEl = document.getElementById(`d${n}-education`);
+    if (occEl) occEl.value = '';
+    if (eduEl) eduEl.value = '';
+  }
 }
 
 function checkDriverHistory(n) {

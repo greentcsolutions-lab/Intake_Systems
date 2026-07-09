@@ -61,6 +61,8 @@ function buildPrintDocument() {
       ${row('Phone', v('app-phone'))}
       ${row('Email', v('app-email'))}
       ${row('Referred By', v('app-referred-by'))}
+      ${row('Occupation', v('app-occupation'))}
+      ${row('Education', v('app-education'))}
       ${row('Total Household Members', v('app-household-total'))}
       ${row('Address', v('app-addr1'))}
       ${row('City', v('app-city'))}
@@ -68,6 +70,35 @@ function buildPrintDocument() {
       ${row('ZIP', v('app-zip'))}
     </div>
   </div>`;
+
+  // ── HOUSEHOLD MEMBERS (account-level — shown regardless of selected LOBs)
+  if (state.driverCount > 0) {
+    let memberRows = '';
+    for (let i = 1; i <= state.driverCount; i++) {
+      if (!document.getElementById(`d${i}-first`)) continue;
+      const name = [v(`d${i}-first`), v(`d${i}-last`)].filter(Boolean).join(' ') || `Member ${i}`;
+      const isSecondInsured = v(`d${i}-second-insured`) === 'Yes';
+      memberRows += `${subHeader(`Household Member ${i} — ${name}`)}
+      <div class="pd-grid">
+        ${row('Date of Birth', v(`d${i}-dob`))}
+        ${row('SSN / Last 4', v(`d${i}-ssn`))}
+        ${row('License #', v(`d${i}-lic`))}
+        ${row('License State', v(`d${i}-lic-state`))}
+        ${row('Relationship', v(`d${i}-rel`))}
+        ${row('Marital Status', v(`d${i}-marital`))}
+        ${row('Good Student', v(`d${i}-good-student`))}
+        ${row('Accidents (3yr)', v(`d${i}-accidents`), parseInt(v(`d${i}-accidents`)) > 0)}
+        ${row('Violations (3yr)', v(`d${i}-violations`), parseInt(v(`d${i}-violations`)) > 0)}
+        ${row('DUI/DWI (5yr)', v(`d${i}-dui`), v(`d${i}-dui`) === 'Yes')}
+        ${row('Second Named Insured', v(`d${i}-second-insured`) || 'No', isSecondInsured)}
+        ${isSecondInsured ? row('Occupation', v(`d${i}-occupation`)) : ''}
+        ${isSecondInsured ? row('Education', v(`d${i}-education`)) : ''}
+      </div>`;
+    }
+    if (memberRows) {
+      html += `<div class="pd-section">${sectionHeader('Household Members')}${memberRows}</div>`;
+    }
+  }
 
   // ── CURRENT COVERAGE (per LOB)
   if (lobs.length) {
@@ -118,25 +149,6 @@ function buildPrintDocument() {
           ${row('Glass Coverage', v(`v${i}-glass`))}
         ${row('Coll Deductible', v(`v${i}-coll`))}
         ${row('GAP', v(`v${i}-gap`))}
-      </div>`;
-    }
-
-    // Household Members
-    for (let i = 1; i <= state.driverCount; i++) {
-      if (!document.getElementById(`d${i}-first`)) continue;
-      const name = [v(`d${i}-first`), v(`d${i}-last`)].filter(Boolean).join(' ') || `Member ${i}`;
-      html += `${subHeader(`Household Member ${i} — ${name}`)}
-      <div class="pd-grid">
-        ${row('Date of Birth', v(`d${i}-dob`))}
-        ${row('SSN / Last 4', v(`d${i}-ssn`))}
-        ${row('License #', v(`d${i}-lic`))}
-        ${row('License State', v(`d${i}-lic-state`))}
-        ${row('Relationship', v(`d${i}-rel`))}
-        ${row('Marital Status', v(`d${i}-marital`))}
-        ${row('Good Student', v(`d${i}-good-student`))}
-        ${row('Accidents (3yr)', v(`d${i}-accidents`), parseInt(v(`d${i}-accidents`)) > 0)}
-        ${row('Violations (3yr)', v(`d${i}-violations`), parseInt(v(`d${i}-violations`)) > 0)}
-        ${row('DUI/DWI (5yr)', v(`d${i}-dui`), v(`d${i}-dui`) === 'Yes')}
       </div>`;
     }
 
