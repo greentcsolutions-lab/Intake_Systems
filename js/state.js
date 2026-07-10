@@ -1,3 +1,7 @@
+// js/state.js
+// Version 1.0.0 — 2026-07-09
+
+
 // ══════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════
@@ -11,38 +15,6 @@ const state = {
 };
 
 const LOB_META = {};
-
-// ══════════════════════════════════════════
-// GATE PANEL (animated reveal for conditional fields)
-// Used by any yes/no or select-driven field group that
-// exposes additional inputs — carrier blocks, reason-other, etc.
-// ══════════════════════════════════════════
-function openGatePanel(panel) {
-  if (!panel) return;
-  panel.classList.remove('hidden');
-  void panel.offsetHeight; // force reflow so the 0fr → 1fr transition plays
-  panel.classList.add('open');
-}
-
-function closeGatePanel(panel) {
-  if (!panel) return;
-  if (!panel.classList.contains('open')) {
-    panel.classList.add('hidden');
-    return;
-  }
-  panel.classList.remove('open');
-  const onEnd = (e) => {
-    if (e.target !== panel || e.propertyName !== 'grid-template-rows') return;
-    panel.classList.add('hidden');
-    panel.removeEventListener('transitionend', onEnd);
-  };
-  panel.addEventListener('transitionend', onEnd);
-}
-
-function toggleGatePanel(panel, shouldOpen) {
-  if (!panel) return;
-  if (shouldOpen) openGatePanel(panel); else closeGatePanel(panel);
-}
 
 // ══════════════════════════════════════════
 // LOB SELECTION
@@ -120,11 +92,12 @@ function renderCarrierBlocks(lobs) {
     const label = CARRIER_LOB_LABELS[lob] || lob;
     const id = `carrier-${lob}`;
     const block = document.createElement('div');
-    block.className = 'gate-card';
+    block.className = 'repeater-item';
     block.id = id;
+    block.style.marginBottom = '14px';
     block.innerHTML = `
       <div class="repeater-title" style="margin-bottom:14px">${label}</div>
-      <div class="gate-question">
+      <div class="field-grid">
         <div class="field">
           <label>Currently Insured?</label>
           <select id="${lob}-currently-insured" onchange="handleCarrierInsured('${lob}')">
@@ -133,48 +106,36 @@ function renderCarrierBlocks(lobs) {
             <option value="No">No</option>
           </select>
         </div>
-      </div>
-
-      <div class="gate-panel hidden" id="${lob}-insured-panel">
-        <div class="gate-panel-inner">
-          <div class="field-grid">
-            <div class="field">
-              <label>Carrier Name</label>
-              <input type="text" id="${lob}-carrier-name" placeholder="State Farm, Progressive, etc.">
-            </div>
-            <div class="field">
-              <label>Policy Number <span class="flag">⚡ if known</span></label>
-              <input type="text" id="${lob}-carrier-policy" placeholder="Optional">
-            </div>
-            <div class="field">
-              <label>Expiration Date</label>
-              <input type="date" id="${lob}-carrier-expiry">
-            </div>
-            <div class="field">
-              <label>Current Premium</label>
-              <input type="text" id="${lob}-carrier-premium" placeholder="$1,200/yr">
-            </div>
-          </div>
+        <div class="field" id="${lob}-carrier-name-field" style="display:none">
+          <label>Carrier Name</label>
+          <input type="text" id="${lob}-carrier-name" placeholder="State Farm, Progressive, etc.">
+        </div>
+        <div class="field" id="${lob}-carrier-policy-field" style="display:none">
+          <label>Policy Number <span class="flag">⚡ if known</span></label>
+          <input type="text" id="${lob}-carrier-policy" placeholder="Optional">
+        </div>
+        <div class="field" id="${lob}-carrier-expiry-field" style="display:none">
+          <label>Expiration Date</label>
+          <input type="date" id="${lob}-carrier-expiry">
+        </div>
+        <div class="field" id="${lob}-carrier-premium-field" style="display:none">
+          <label>Current Premium</label>
+          <input type="text" id="${lob}-carrier-premium" placeholder="$1,200/yr">
+        </div>
+        <div class="field" id="${lob}-carrier-lapse-field" style="display:none">
+          <label>Reason for Lapse</label>
+          <select id="${lob}-carrier-lapse" onchange="handleCarrierLapse('${lob}')">
+            <option value="">-- Select --</option>
+            <option>Non-payment</option>
+            <option>Cancelled by carrier</option>
+            <option>Never had insurance</option>
+            <option>Other</option>
+          </select>
         </div>
       </div>
-
-      <div class="gate-panel hidden" id="${lob}-lapse-panel">
-        <div class="gate-panel-inner">
-          <div class="field">
-            <label>Reason for Lapse</label>
-            <select id="${lob}-carrier-lapse" onchange="handleCarrierLapse('${lob}')">
-              <option value="">-- Select --</option>
-              <option>Non-payment</option>
-              <option>Cancelled by carrier</option>
-              <option>Never had insurance</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div id="${lob}-carrier-lapse-alert" class="alert alert-warn hidden" style="margin-top:10px">
-            <div class="alert-icon">⚠️</div>
-            <div><strong>${label} Coverage Lapse</strong> Most carriers will rate for lapse. Document reason and duration carefully.</div>
-          </div>
-        </div>
+      <div id="${lob}-carrier-lapse-alert" class="alert alert-warn hidden" style="margin-top:10px">
+        <div class="alert-icon">⚠️</div>
+        <div><strong>${label} Coverage Lapse</strong> Most carriers will rate for lapse. Document reason and duration carefully.</div>
       </div>`;
     container.appendChild(block);
   });
@@ -185,8 +146,14 @@ function handleCarrierInsured(lob) {
   const isYes = val === 'Yes';
   const isNo  = val === 'No';
 
-  toggleGatePanel(document.getElementById(`${lob}-insured-panel`), isYes);
-  toggleGatePanel(document.getElementById(`${lob}-lapse-panel`), isNo);
+  const fields = ['carrier-name', 'carrier-policy', 'carrier-expiry', 'carrier-premium'];
+  fields.forEach(f => {
+    const el = document.getElementById(`${lob}-${f}-field`);
+    if (el) el.style.display = isYes ? 'block' : 'none';
+  });
+
+  const lapseField = document.getElementById(`${lob}-carrier-lapse-field`);
+  if (lapseField) lapseField.style.display = isNo ? 'block' : 'none';
 
   // Reset lapse reason when toggling away from No
   if (!isNo) {
