@@ -1,5 +1,5 @@
 // js/output/pdf.js
-// Version 1.0.0 — 2026-07-09
+// Version 1.0.1 — 2026-07-09
 
 
 // ══════════════════════════════════════════
@@ -174,7 +174,7 @@ function buildPrintDocument() {
       ${row('Rental Reimbursement', v('auto-rental'))}
       ${row('Roadside Assistance', v('auto-roadside'))}
       ${row('SR-22', v('auto-sr22'), v('auto-sr22') === 'Yes')}
-      ${row('SR-22 Reason', v('auto-sr22-reason'))}
+      ${v('auto-sr22') === 'Yes' ? row('SR-22 Reason', v('auto-sr22-reason')) : ''}
       ${row('Rideshare', v('auto-rideshare'), v('auto-rideshare') === 'Yes')}
       ${row('Business Use', v('auto-business-use'))}
       ${row('Telematics', v('auto-telematics'))}
