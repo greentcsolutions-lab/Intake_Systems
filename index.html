@@ -1,5 +1,5 @@
 <!-- index.html -->
-<!-- Version 1.0.0 — 2026-07-09 -->
+<!-- Version 1.1.0 — 2026-07-09 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -503,6 +503,84 @@
         <div id="roof-age-alert" class="alert alert-warn hidden" style="margin-top:12px">
           <div class="alert-icon">⚠️</div>
           <div><strong>Roof Age Flag</strong> Roof appears to be 15+ years old. Many carriers will require inspection or may limit coverage. Confirm market appetite.</div>
+        </div>
+
+        <div class="section-divider"><span>Construction Materials</span></div>
+        <div class="alert alert-info" style="margin-bottom:14px">
+          <div class="alert-icon">ℹ️</div>
+          <div><strong>Percentages must total 100%</strong> for each surface. Up to 4 materials per surface — note anything beyond that in Agent Notes.</div>
+        </div>
+
+        <div class="repeater-item" style="margin-bottom:14px">
+          <div class="repeater-title" style="margin-bottom:14px">Exterior Siding</div>
+          <div class="field-grid three">
+            <div class="field" data-new-required>
+              <label>Material 1 <span class="req">*</span></label>
+              <select id="home-siding1-type" onchange="updateMaterialTotal('siding')">
+                <option value="">-- Select --</option>
+                <option>Vinyl</option><option>Brick</option><option>Brick Veneer</option>
+                <option>Wood</option><option>Stucco</option><option>Fiber Cement (Hardie Board)</option>
+                <option>Stone / Stone Veneer</option><option>Aluminum / Metal</option>
+                <option>EIFS / Synthetic Stucco</option><option>Log</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field" data-new-required>
+              <label>Material 1 % <span class="req">*</span></label>
+              <input type="number" id="home-siding1-pct" min="1" max="100" placeholder="e.g. 100" oninput="updateMaterialTotal('siding')">
+            </div>
+          </div>
+          <div id="siding-materials-container"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <span id="siding-total" style="font-size:12px;font-weight:600;color:var(--red)">Total: 0%</span>
+            <button type="button" class="btn-add" id="siding-add-btn" style="width:auto;margin-top:0;padding:6px 16px" onclick="addMaterialRow('siding')">+ Add Material</button>
+          </div>
+        </div>
+
+        <div class="repeater-item" style="margin-bottom:14px">
+          <div class="repeater-title" style="margin-bottom:14px">Interior Walls</div>
+          <div class="field-grid three">
+            <div class="field" data-new-required>
+              <label>Material 1 <span class="req">*</span></label>
+              <select id="home-wall1-type" onchange="updateMaterialTotal('wall')">
+                <option value="">-- Select --</option>
+                <option>Drywall</option><option>Plaster</option><option>Wood Paneling</option>
+                <option>Brick</option><option>Concrete Block</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field" data-new-required>
+              <label>Material 1 % <span class="req">*</span></label>
+              <input type="number" id="home-wall1-pct" min="1" max="100" placeholder="e.g. 100" oninput="updateMaterialTotal('wall')">
+            </div>
+          </div>
+          <div id="wall-materials-container"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <span id="wall-total" style="font-size:12px;font-weight:600;color:var(--red)">Total: 0%</span>
+            <button type="button" class="btn-add" id="wall-add-btn" style="width:auto;margin-top:0;padding:6px 16px" onclick="addMaterialRow('wall')">+ Add Material</button>
+          </div>
+        </div>
+
+        <div class="repeater-item" style="margin-bottom:14px">
+          <div class="repeater-title" style="margin-bottom:14px">Flooring</div>
+          <div class="field-grid three">
+            <div class="field" data-new-required>
+              <label>Material 1 <span class="req">*</span></label>
+              <select id="home-floor1-type" onchange="updateMaterialTotal('floor')">
+                <option value="">-- Select --</option>
+                <option>Hardwood</option><option>Engineered Wood</option><option>Carpet</option>
+                <option>Tile</option><option>Laminate</option><option>Vinyl / LVP</option>
+                <option>Concrete</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field" data-new-required>
+              <label>Material 1 % <span class="req">*</span></label>
+              <input type="number" id="home-floor1-pct" min="1" max="100" placeholder="e.g. 100" oninput="updateMaterialTotal('floor')">
+            </div>
+          </div>
+          <div id="floor-materials-container"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+            <span id="floor-total" style="font-size:12px;font-weight:600;color:var(--red)">Total: 0%</span>
+            <button type="button" class="btn-add" id="floor-add-btn" style="width:auto;margin-top:0;padding:6px 16px" onclick="addMaterialRow('floor')">+ Add Material</button>
+          </div>
         </div>
 
         <div class="section-divider"><span>Updates &amp; Condition</span></div>

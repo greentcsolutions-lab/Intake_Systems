@@ -1,5 +1,5 @@
 // js/output/collect.js
-// Version 1.0.0 — 2026-07-09
+// Version 1.1.0 — 2026-07-09
 
 
 // ══════════════════════════════════════════
@@ -190,6 +190,27 @@ function validateStep() {
       flagById('home-roof-year', 'Roof Year');
       flagById('home-foundation','Foundation Type');
       flagById('home-stories',   'Number of Stories');
+
+      // Construction materials — siding, interior walls, flooring
+      const materialCounts = (window.materialCounts) || { siding: 1, wall: 1, floor: 1 };
+      const materialLabels = { siding: 'Exterior Siding', wall: 'Interior Wall', floor: 'Flooring' };
+      ['siding', 'wall', 'floor'].forEach(surface => {
+        const label = materialLabels[surface];
+        const count = materialCounts[surface] || 1;
+        let total = 0;
+        let anyPresent = false;
+        for (let i = 1; i <= count; i++) {
+          const typeEl = document.getElementById(`home-${surface}${i}-type`);
+          if (!typeEl) continue; // row was removed
+          anyPresent = true;
+          flagById(`home-${surface}${i}-type`, `${label} Material ${i} — Type`);
+          flagById(`home-${surface}${i}-pct`,  `${label} Material ${i} — Percentage`);
+          total += parseFloat(document.getElementById(`home-${surface}${i}-pct`)?.value) || 0;
+        }
+        if (anyPresent && total !== 100) {
+          errors.push({ labelText: `${label} — material percentages must total 100% (currently ${total}%)`, fieldDiv: null });
+        }
+      });
     }
   }
 
@@ -348,6 +369,22 @@ function collectAllData() {
     data['Roof Year']           = val('home-roof-year');
     data['Foundation']          = val('home-foundation');
     data['Stories']             = val('home-stories');
+
+    // Construction materials — siding, interior walls, flooring
+    const materialCounts = (window.materialCounts) || { siding: 1, wall: 1, floor: 1 };
+    const materialLabels = { siding: 'Exterior Siding', wall: 'Interior Wall', floor: 'Flooring' };
+    ['siding', 'wall', 'floor'].forEach(surface => {
+      const label = materialLabels[surface];
+      const count = materialCounts[surface] || 1;
+      const parts = [];
+      for (let i = 1; i <= count; i++) {
+        const type = val(`home-${surface}${i}-type`);
+        const pct  = val(`home-${surface}${i}-pct`);
+        if (type && pct) parts.push(`${type} (${pct}%)`);
+      }
+      data[`${label} Materials`] = parts.join(', ');
+    });
+
     data['Garage']              = val('home-garage');
     data['Heating']             = val('home-heat');
     data['Pool']                = val('home-pool');
@@ -543,7 +580,7 @@ function buildReview() {
       return { title: `${l} — Current Coverage`, keys: [`${l} Currently Insured`,`${l} Carrier Name`,`${l} Policy Number`,`${l} Expiration Date`,`${l} Current Premium`,`${l} Lapse Reason`] };
     }),
     ...(state.selectedLOBs.includes('auto') ? [{ title: 'Personal Auto — Coverage', keys: ['Auto BI','Auto PD','Auto UM BI','Auto UIM BI','Auto MedPay','Auto Rental','Auto SR22','Auto Rideshare'] }] : []),
-    ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Home Address','Construction Type','Purchase Date','Year Built','Square Footage','Roof Type','Roof Year','Foundation','Stories','Garage','Heating','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
+    ...(state.selectedLOBs.includes('home') ? [{ title: 'Home / Renters', keys: ['Home Type','Home Address','Construction Type','Purchase Date','Year Built','Square Footage','Roof Type','Roof Year','Foundation','Stories','Exterior Siding Materials','Interior Wall Materials','Flooring Materials','Garage','Heating','Pool','Dog','Smoke Detectors','Security Alarm','Home Mortgage','Home Lender','Home Cov A','Home Cov C','Home Liability','Home Deductible'] }] : []),
     ...(state.selectedLOBs.includes('life') ? (() => {
       const type = val('life-type');
       const isMedicare = ['Medicare Supplement', 'Medicare Advantage', 'Health / ACA'].includes(type);

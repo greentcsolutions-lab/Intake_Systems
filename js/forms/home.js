@@ -1,6 +1,82 @@
 // js/forms/home.js
-// Version 1.0.0 — 2026-07-09
+// Version 1.1.0 — 2026-07-09
 
+
+// ══════════════════════════════════════════
+// CONSTRUCTION MATERIALS (Siding / Interior Walls / Flooring)
+// Material 1 is static in index.html; materials 2-4 are added dynamically.
+// Percentages for a given surface must total 100%.
+// ══════════════════════════════════════════
+const MATERIAL_OPTIONS = {
+  siding: ['Vinyl', 'Brick', 'Brick Veneer', 'Wood', 'Stucco', 'Fiber Cement (Hardie Board)', 'Stone / Stone Veneer', 'Aluminum / Metal', 'EIFS / Synthetic Stucco', 'Log', 'Other'],
+  wall:   ['Drywall', 'Plaster', 'Wood Paneling', 'Brick', 'Concrete Block', 'Other'],
+  floor:  ['Hardwood', 'Engineered Wood', 'Carpet', 'Tile', 'Laminate', 'Vinyl / LVP', 'Concrete', 'Other'],
+};
+const MATERIAL_LABELS = { siding: 'Exterior Siding', wall: 'Interior Wall', floor: 'Flooring' };
+
+function ensureMaterialCounts() {
+  if (!window.materialCounts) window.materialCounts = { siding: 1, wall: 1, floor: 1 };
+  return window.materialCounts;
+}
+
+function addMaterialRow(surface) {
+  const counts = ensureMaterialCounts();
+  if (counts[surface] >= 4) return;
+  counts[surface]++;
+  const n = counts[surface];
+  const c = document.getElementById(`${surface}-materials-container`);
+  if (!c) return;
+  const label = MATERIAL_LABELS[surface];
+  const optionsHtml = MATERIAL_OPTIONS[surface].map(m => `<option>${m}</option>`).join('');
+
+  const div = document.createElement('div');
+  div.className = 'field-grid three';
+  div.id = `${surface}-mat-${n}`;
+  div.style.marginTop = '10px';
+  div.innerHTML = `
+    <div class="field" data-new-required>
+      <label>${label} Material ${n} <span class="req">*</span></label>
+      <select id="home-${surface}${n}-type" onchange="updateMaterialTotal('${surface}')">
+        <option value="">-- Select --</option>
+        ${optionsHtml}
+      </select>
+    </div>
+    <div class="field" data-new-required>
+      <label>${label} Material ${n} % <span class="req">*</span></label>
+      <input type="number" id="home-${surface}${n}-pct" min="1" max="100" placeholder="e.g. 25" oninput="updateMaterialTotal('${surface}')">
+    </div>
+    <div class="field" style="justify-content:flex-end">
+      <button type="button" class="btn-remove" onclick="removeMaterialRow('${surface}', ${n})">Remove</button>
+    </div>`;
+  c.appendChild(div);
+  updateMaterialTotal(surface);
+}
+
+function removeMaterialRow(surface, n) {
+  document.getElementById(`${surface}-mat-${n}`)?.remove();
+  // Note: counts[surface] is left as-is (highest n used) — validateStep/collect loops
+  // check element existence, so a removed middle row is simply skipped.
+  updateMaterialTotal(surface);
+}
+
+function updateMaterialTotal(surface) {
+  const counts = ensureMaterialCounts();
+  const count = counts[surface];
+  let total = 0;
+  for (let i = 1; i <= count; i++) {
+    const el = document.getElementById(`home-${surface}${i}-pct`);
+    if (el && document.body.contains(el) && el.value) total += parseFloat(el.value) || 0;
+  }
+  const totalEl = document.getElementById(`${surface}-total`);
+  if (totalEl) {
+    totalEl.textContent = `Total: ${total}%`;
+    totalEl.style.color = total === 100 ? 'var(--green)' : 'var(--red)';
+  }
+  const addBtn = document.getElementById(`${surface}-add-btn`);
+  if (addBtn) {
+    addBtn.style.display = (total < 100 && count < 4) ? '' : 'none';
+  }
+}
 
 // ══════════════════════════════════════════
 // HOME LOSS REPEATER

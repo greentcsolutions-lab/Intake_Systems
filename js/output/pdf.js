@@ -1,5 +1,5 @@
 // js/output/pdf.js
-// Version 1.0.1 — 2026-07-09
+// Version 1.1.0 — 2026-07-09
 
 
 // ══════════════════════════════════════════
@@ -19,6 +19,20 @@ function sectionHeader(title, lob) {
 }
 function subHeader(title) {
   return `<div class="pd-sub-header">${title}</div>`;
+}
+function materialsSummary(surface) {
+  const counts = (window.materialCounts) || { siding: 1, wall: 1, floor: 1 };
+  const count = counts[surface] || 1;
+  const parts = [];
+  for (let i = 1; i <= count; i++) {
+    const typeEl = document.getElementById(`home-${surface}${i}-type`);
+    const pctEl  = document.getElementById(`home-${surface}${i}-pct`);
+    if (!typeEl) continue;
+    const type = typeEl.value.trim();
+    const pct  = pctEl ? pctEl.value.trim() : '';
+    if (type && pct) parts.push(`${type} (${pct}%)`);
+  }
+  return parts.join(', ');
 }
 
 function buildPrintDocument() {
@@ -198,6 +212,9 @@ function buildPrintDocument() {
       ${row('Heating', v('home-heat'))}
       ${row('Roof Type', v('home-roof-type'))}
       ${row('Roof Year', v('home-roof-year'), !isNaN(parseInt(v('home-roof-year'))) && (new Date().getFullYear() - parseInt(v('home-roof-year'))) >= 15)}
+      ${row('Exterior Siding', materialsSummary('siding'))}
+      ${row('Interior Walls', materialsSummary('wall'))}
+      ${row('Flooring', materialsSummary('floor'))}
       ${row('Electrical Updated', v('home-electric-updated'))}
       ${row('Plumbing Updated', v('home-plumbing-updated'))}
       ${row('Knob & Tube', v('home-knob-tube'), v('home-knob-tube') === 'Yes')}

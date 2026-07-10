@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.0.0 — 2026-07-09
+// Version 1.1.0 — 2026-07-09
 
 
 // ══════════════════════════════════════════
@@ -55,13 +55,15 @@ function startIntake() {
 
   // Reset repeater containers and counts before init
   ['vehicles-container', 'vehicles-cov-container', 'drivers-container',
-   'medications-container'].forEach(id => {
+   'medications-container', 'siding-materials-container', 'wall-materials-container',
+   'floor-materials-container'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
   state.vehicleCount = 0;
   state.driverCount = 0;
   window.medCount = 0;
+  window.materialCounts = { siding: 1, wall: 1, floor: 1 };
 
   // Render per-LOB carrier blocks on the applicant page
   renderCarrierBlocks(lobs);
