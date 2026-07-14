@@ -1,5 +1,5 @@
 /* ss/styles.css */
-/* Version 1.2.0 — 2026-07-14 */
+/* Version 1.3.0 — 2026-07-14 */
 
 :root {
     --navy: #1a2744;
@@ -644,6 +644,28 @@
     color: var(--muted);
     font-style: italic;
     margin-bottom: 4px;
+  }
+
+  /* ── GATE CARD / ANIMATED MICRO-PANEL (conditional field reveals) ──
+     .gate-card wraps a question (.gate-question, e.g. a Yes/No select)
+     and its conditional follow-up (.gate-panel). Driven by
+     toggleGatePanel() in state.js. */
+  .gate-card {
+    margin-bottom: 4px;
+  }
+  .gate-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    overflow: hidden;
+    transition: grid-template-rows 0.3s ease;
+  }
+  .gate-panel.expanded {
+    grid-template-rows: 1fr;
+  }
+  .gate-panel-inner {
+    overflow: hidden;
+    min-height: 0;
+    padding-top: 14px;
   }
 
   /* ── HIDDEN ── */

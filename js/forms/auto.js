@@ -1,5 +1,5 @@
 // js/forms/auto.js
-// Version 1.1.0 — 2026-07-14
+// Version 1.2.0 — 2026-07-14
 
 
 // ══════════════════════════════════════════
@@ -421,7 +421,15 @@ function handleHouseholdGate() {
     state.currentStepIndex = state.steps.indexOf(`applicant:A6a-${n}`);
     renderStep();
   } else {
-    nextStep();
+    // "No" must jump straight to A7, NOT fall through to a generic
+    // nextStep(). Every already-added member's A6a-n/A6b-n screens are
+    // spliced in between the gate and A7 (see addHouseholdMember()), so a
+    // plain array-index increment here would land on the first loop item
+    // instead of skipping past all of them — this was the cause of the
+    // "stuck in a loop" bug: selecting No repeatedly re-entered household
+    // member screens instead of ever reaching Reason for Policy.
+    state.currentStepIndex = state.steps.indexOf('applicant:A7');
+    renderStep();
   }
 }
 

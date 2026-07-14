@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.3.0 — 2026-07-14
+// Version 1.5.0 — 2026-07-14
 
 
 // ══════════════════════════════════════════
@@ -15,6 +15,28 @@ const state = {
 };
 
 const LOB_META = {};
+
+// ══════════════════════════════════════════
+// GATE PANEL (shared conditional-reveal utility)
+// ══════════════════════════════════════════
+// Drives the .gate-panel grid-template-rows 0fr→1fr collapse animation used
+// throughout Applicant and Auto for in-place conditional reveals (commute
+// details, lienholder block, glass coverage, SR-22 reason, reason-other,
+// second-named-insured). Defined here (state.js loads first of all app
+// scripts) since it's called from auto.js, collect.js, and inline handlers
+// in index.html — a shared layout utility, not owned by any one LOB.
+//
+// `hidden` (display:none !important) is used only for a panel's true
+// initial/never-shown state, matching the static markup in index.html and
+// the dynamically-generated blocks in auto.js. The first call — regardless
+// of show value — permanently switches the panel over to the animated
+// grid-template-rows model, so every subsequent toggle (open OR close)
+// animates rather than snapping.
+function toggleGatePanel(el, show) {
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.toggle('expanded', !!show);
+}
 
 // ══════════════════════════════════════════
 // MICRO-STEP ENGINE (No-Scroll Refactor — Stage 0)
@@ -438,9 +460,16 @@ function renderStep() {
     }
   }
 
-  // When entering the household-members gate, refresh the running summary
+  // When entering the household-members gate, refresh the running summary.
+  // The gate's Yes/No select auto-advances on its own, so the global
+  // Continue button is hidden here to remove any chance of it firing a
+  // second, redundant navigation on top of the select's onchange.
+  const applicantContinueBtn = document.getElementById('applicant-continue-btn');
   if (key === 'applicant:A6') {
     refreshHouseholdSummary();
+    if (applicantContinueBtn) applicantContinueBtn.classList.add('hidden');
+  } else if (applicantContinueBtn) {
+    applicantContinueBtn.classList.remove('hidden');
   }
 
   // When entering auto coverage screen, rebuild physical damage blocks
