@@ -1,5 +1,5 @@
 // js/forms/auto.js
-// Version 1.0.0 — 2026-07-09
+// Version 1.1.0 — 2026-07-14
 
 
 // ══════════════════════════════════════════
@@ -265,18 +265,15 @@ const EDUCATION_OPTIONS_HTML = [
 ].map(o => `<option>${o}</option>`).join('');
 
 function addHouseholdMember() {
-  if (state.driverCount >= 5) return; // max 5 additional
   state.driverCount++;
   const n = state.driverCount;
-  const c = document.getElementById('drivers-container');
-  const div = document.createElement('div');
-  div.className = 'repeater-item';
-  div.id = `driver-${n}`;
-  div.innerHTML = `
-    <div class="repeater-header">
-      <div class="repeater-title">Additional Member ${n}</div>
-      <button class="btn-remove" onclick="removeMember('driver-${n}')">Remove</button>
-    </div>
+  const container = document.getElementById('hh-loop-container');
+
+  const a6a = document.createElement('div');
+  a6a.className = 'micro-screen hidden';
+  a6a.dataset.microStep = `applicant:A6a-${n}`;
+  a6a.innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:16px">Household Member ${n}</div>
     <div class="field-grid three">
       <div class="field"><label>First Name</label><input type="text" id="d${n}-first"></div>
       <div class="field"><label>Last Name</label><input type="text" id="d${n}-last"></div>
@@ -331,8 +328,14 @@ function addHouseholdMember() {
     <div id="d${n}-age-alert" class="alert alert-warn hidden" style="margin-top:10px">
       <div class="alert-icon">⚠️</div>
       <div><strong>Young Driver</strong> Drivers under 25 typically rated significantly higher. Confirm discount eligibility (good student, driver training).</div>
-    </div>
-    <div class="section-divider" style="margin:16px 0 12px"><span>Second Named Insured</span></div>
+    </div>`;
+  container.appendChild(a6a);
+
+  const a6b = document.createElement('div');
+  a6b.className = 'micro-screen hidden';
+  a6b.dataset.microStep = `applicant:A6b-${n}`;
+  a6b.innerHTML = `
+    <div class="section-divider"><span>Second Named Insured — Member ${n}</span></div>
     <div class="field-grid">
       <div class="field">
         <label>Second Named Insured on Policy?</label>
@@ -358,21 +361,94 @@ function addHouseholdMember() {
         </div>
       </div>
     </div>`;
-  c.appendChild(div);
+  container.appendChild(a6b);
 
-  // Hide button once 5 additional members reached
-  if (state.driverCount >= 5) {
-    const btn = document.getElementById('add-member-btn');
-    if (btn) btn.style.display = 'none';
+  // Splice this member's two screens in immediately before Reason for
+  // Policy (A7) — appending at a fixed anchor, rather than relative to the
+  // gate, keeps repeated "Yes" answers in chronological order (member 1's
+  // screens stay ahead of member 2's, etc.) regardless of how many loop
+  // iterations already exist.
+  const a7Idx = state.steps.indexOf('applicant:A7');
+  if (a7Idx !== -1) {
+    state.steps.splice(a7Idx, 0, `applicant:A6a-${n}`, `applicant:A6b-${n}`);
+  }
+
+  return n;
+}
+
+// Count of household members currently ACTIVE (not removed). Distinct from
+// state.driverCount, which is a high-water mark used only for assigning
+// fresh, never-reused element IDs — matches the pattern already used for
+// construction-material rows in home.js. The 5-member cap is enforced
+// against the active count so removing members actually frees up a slot.
+function activeHouseholdCount() {
+  let count = 0;
+  for (let i = 1; i <= state.driverCount; i++) {
+    if (document.getElementById(`d${i}-first`)) count++;
+  }
+  return count;
+}
+
+function refreshHouseholdSummary() {
+  const el = document.getElementById('hh-members-summary');
+  if (!el) return;
+  let rows = '';
+  for (let i = 1; i <= state.driverCount; i++) {
+    if (!document.getElementById(`d${i}-first`)) continue; // removed
+    const first = document.getElementById(`d${i}-first`)?.value.trim();
+    const last = document.getElementById(`d${i}-last`)?.value.trim();
+    const name = [first, last].filter(Boolean).join(' ') || `Member ${i}`;
+    rows += `<div class="hh-summary-row">
+      <span class="hh-summary-name">${name}</span>
+      <button type="button" class="btn-remove" onclick="removeMember(${i})">Remove</button>
+    </div>`;
+  }
+  el.innerHTML = rows || '<div class="hh-summary-empty">No additional household members yet.</div>';
+}
+
+function handleHouseholdGate() {
+  const gateEl = document.getElementById('app-hh-gate');
+  const gateVal = gateEl?.value;
+  if (!gateVal) { alert('Please select Yes or No.'); return; }
+
+  if (gateVal === 'Yes') {
+    if (activeHouseholdCount() >= 5) {
+      alert('Maximum of 5 additional household members reached.');
+      gateEl.value = '';
+      return;
+    }
+    const n = addHouseholdMember();
+    state.currentStepIndex = state.steps.indexOf(`applicant:A6a-${n}`);
+    renderStep();
+  } else {
+    nextStep();
   }
 }
 
-function removeMember(id) {
-  document.getElementById(id)?.remove();
-  state.driverCount--;
-  // Re-show button if under limit
-  const btn = document.getElementById('add-member-btn');
-  if (btn) btn.style.display = '';
+// Called from the last screen of a loop iteration (A6b-n's Continue) to
+// jump back to the A6 gate instead of falling through to A7 — this is the
+// "loop back to gate" behavior. Resetting the gate's value here (rather
+// than on every renderStep()) is what lets handleHouseholdGate() /
+// autoAdvanceGate fire again on re-entry.
+function finishHouseholdLoopIteration() {
+  if (!validateStep()) return;
+  const gateEl = document.getElementById('app-hh-gate');
+  if (gateEl) gateEl.value = '';
+  state.currentStepIndex = state.steps.indexOf('applicant:A6');
+  renderStep();
+}
+
+function removeMember(n) {
+  document.querySelector(`.micro-screen[data-micro-step="applicant:A6a-${n}"]`)?.remove();
+  document.querySelector(`.micro-screen[data-micro-step="applicant:A6b-${n}"]`)?.remove();
+  removeLoopIteration([`applicant:A6a-${n}`, `applicant:A6b-${n}`]);
+  // state.driverCount is intentionally left unchanged — matches the
+  // material-row high-water-mark pattern. collectAllData()/pdf.js/
+  // buildReview() already guard on element existence (`continue` when a
+  // d{i}-first is missing), so a removed member is simply skipped in
+  // output, and future members always get a fresh, never-reused number.
+  refreshHouseholdSummary();
+  renderStep();
 }
 
 function toggleSecondNamedInsured(n) {

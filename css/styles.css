@@ -1,5 +1,5 @@
 /* ss/styles.css */
-/* Version 1.1.0 — 2026-07-13 */
+/* Version 1.2.0 — 2026-07-14 */
 
 :root {
     --navy: #1a2744;
@@ -622,6 +622,29 @@
     padding-left: 18px;
   }
   .validation-banner li { margin-bottom: 3px; }
+
+  /* ── HOUSEHOLD SUMMARY LIST (No-Scroll Refactor — Stage 1 gate screen) ── */
+  .hh-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--cream);
+    margin-bottom: 8px;
+  }
+  .hh-summary-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .hh-summary-empty {
+    font-size: 13px;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 4px;
+  }
 
   /* ── HIDDEN ── */
   .hidden { display: none !important; }

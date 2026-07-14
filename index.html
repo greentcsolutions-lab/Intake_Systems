@@ -1,5 +1,5 @@
 <!-- index.html -->
-<!-- Version 1.1.0 — 2026-07-09 -->
+<!-- Version 1.2.0 — 2026-07-13 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +26,7 @@
 <div class="app">
   <div class="progress-label" id="progressLabel">Step 1 of 2 — Line Selection</div>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:10%"></div></div>
+  <div class="sub-progress-label hidden" id="subProgressLabel"></div>
   <div class="step-nav" id="stepNav"></div>
 
   <!-- LOB SELECTOR -->
@@ -62,148 +63,189 @@
       <div class="card-title">Applicant Information</div>
       <div class="card-desc">Primary named insured and contact details.</div>
 
-      <div class="existing-client-row">
-        <span class="existing-client-label">Existing Client?</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="app-existing-client" onchange="handleExistingClient()">
-          <span class="toggle-track">
-            <span class="toggle-thumb"></span>
-          </span>
-        </label>
-        <span class="toggle-value-label" id="existing-client-val-label">No — New Client</span>
-      </div>
-
-      <div class="field-grid">
-        <div class="field">
-          <label>First Name <span class="req">*</span></label>
-          <input type="text" id="app-first" placeholder="Jane">
+      <!-- A1: Existing Client toggle + Name + Phone -->
+      <div class="micro-screen" data-micro-step="applicant:A1">
+        <div class="existing-client-row">
+          <span class="existing-client-label">Existing Client?</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="app-existing-client" onchange="handleExistingClient()">
+            <span class="toggle-track">
+              <span class="toggle-thumb"></span>
+            </span>
+          </label>
+          <span class="toggle-value-label" id="existing-client-val-label">No — New Client</span>
         </div>
-        <div class="field">
-          <label>Last Name <span class="req">*</span></label>
-          <input type="text" id="app-last" placeholder="Smith">
-        </div>
-        <div class="field" data-new-required>
-          <label>Date of Birth <span class="req">*</span></label>
-          <input type="date" id="app-dob">
-        </div>
-        <div class="field">
-          <label>SSN / Last 4 <span class="flag">⚡ for insurance score / discount eligibility</span></label>
-          <input type="text" id="app-ssn" placeholder="XXX-XX-1234" maxlength="11">
-        </div>
-        <div class="field">
-          <label>Phone <span class="req">*</span></label>
-          <input type="tel" id="app-phone" placeholder="(555) 000-0000">
-        </div>
-        <div class="field">
-          <label>Email</label>
-          <input type="email" id="app-email" placeholder="jane@email.com">
-        </div>
-        <div class="field">
-          <label>Referred By</label>
-          <input type="text" id="app-referred-by" placeholder="Name or source of referral">
-        </div>
-        <div class="field" data-new-required>
-          <label>Occupation <span class="req">*</span></label>
-          <input type="text" id="app-occupation" placeholder="e.g. Registered Nurse">
-        </div>
-        <div class="field" data-new-required>
-          <label>Education <span class="req">*</span></label>
-          <select id="app-education">
-            <option value="">-- Select --</option>
-            <option>Less than High School</option>
-            <option>High School / GED</option>
-            <option>Some College</option>
-            <option>Associate's Degree</option>
-            <option>Bachelor's Degree</option>
-            <option>Master's Degree</option>
-            <option>Doctorate / Professional Degree</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="section-divider"><span>Mailing Address</span></div>
-      <div class="field-grid">
-        <div class="field span2" data-new-required>
-          <label>Street Address <span class="req">*</span></label>
-          <input type="text" id="app-addr1" placeholder="123 Main St">
-        </div>
-        <div class="field" data-new-required>
-          <label>City <span class="req">*</span></label>
-          <input type="text" id="app-city">
-        </div>
-        <div class="field" data-new-required>
-          <label>State <span class="req">*</span></label>
-          <select id="app-state">
-            <option value="">-- Select --</option>
-            <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
-            <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
-            <option>FL</option><option>GA</option><option>HI</option><option>ID</option>
-            <option>IL</option><option>IN</option><option>IA</option><option>KS</option>
-            <option>KY</option><option>LA</option><option>ME</option><option>MD</option>
-            <option>MA</option><option>MI</option><option>MN</option><option>MS</option>
-            <option selected>MO</option><option>MT</option><option>NE</option><option>NV</option>
-            <option>NH</option><option>NJ</option><option>NM</option><option>NY</option>
-            <option>NC</option><option>ND</option><option>OH</option><option>OK</option>
-            <option>OR</option><option>PA</option><option>RI</option><option>SC</option>
-            <option>SD</option><option>TN</option><option>TX</option><option>UT</option>
-            <option>VT</option><option>VA</option><option>WA</option><option>WV</option>
-            <option>WI</option><option>WY</option>
-          </select>
-        </div>
-        <div class="field" data-new-required>
-          <label>ZIP <span class="req">*</span></label>
-          <input type="text" id="app-zip" placeholder="65000" maxlength="5">
-        </div>
-      </div>
-
-      <div class="section-divider"><span>Household Members</span></div>
-      <div class="alert alert-info" style="margin-bottom:14px">
-        <div class="alert-icon">ℹ️</div>
-        <div><strong>List all household members age 16 or older.</strong> Required for auto rating and home underwriting. All licensed drivers must be included.</div>
-      </div>
-      <div class="field-grid" style="margin-bottom:16px">
-        <div class="field">
-          <label>Total Household Members (all ages)</label>
-          <input type="number" id="app-household-total" placeholder="e.g. 4" min="1">
-        </div>
-      </div>
-      <div id="drivers-container"></div>
-      <button class="btn-add" id="add-member-btn" onclick="addHouseholdMember()">+ Add Additional Household Member</button>
-
-      <div class="section-divider"><span>Reason for Policy</span></div>
-      <div class="gate-card">
-        <div class="gate-question">
+        <div class="field-grid">
           <div class="field">
-            <label>Reason for Policy <span class="req">*</span></label>
-            <select id="app-reason" onchange="handlePolicyReason()">
+            <label>First Name <span class="req">*</span></label>
+            <input type="text" id="app-first" placeholder="Jane">
+          </div>
+          <div class="field">
+            <label>Last Name <span class="req">*</span></label>
+            <input type="text" id="app-last" placeholder="Smith">
+          </div>
+          <div class="field">
+            <label>Phone <span class="req">*</span></label>
+            <input type="tel" id="app-phone" placeholder="(555) 000-0000">
+          </div>
+        </div>
+      </div>
+
+      <!-- A2: Identity — skipped for existing clients -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A2">
+        <div class="field-grid">
+          <div class="field" data-new-required>
+            <label>Date of Birth <span class="req">*</span></label>
+            <input type="date" id="app-dob">
+          </div>
+          <div class="field">
+            <label>SSN / Last 4 <span class="flag">⚡ for insurance score / discount eligibility</span></label>
+            <input type="text" id="app-ssn" placeholder="XXX-XX-1234" maxlength="11">
+          </div>
+        </div>
+      </div>
+
+      <!-- A3: Contact — skipped for existing clients -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A3">
+        <div class="field-grid">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="app-email" placeholder="jane@email.com">
+          </div>
+          <div class="field">
+            <label>Referred By</label>
+            <input type="text" id="app-referred-by" placeholder="Name or source of referral">
+          </div>
+        </div>
+      </div>
+
+      <!-- A4: Background — skipped for existing clients -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A4">
+        <div class="field-grid">
+          <div class="field" data-new-required>
+            <label>Occupation <span class="req">*</span></label>
+            <input type="text" id="app-occupation" placeholder="e.g. Registered Nurse">
+          </div>
+          <div class="field" data-new-required>
+            <label>Education <span class="req">*</span></label>
+            <select id="app-education">
               <option value="">-- Select --</option>
-              <option>New Home Purchase</option>
-              <option>New Vehicle Purchase</option>
-              <option>Moving / Relocation</option>
-              <option>Life Event (Marriage / Divorce / Baby)</option>
-              <option>Rate Shopping</option>
-              <option>Renewal / Rewrite</option>
-              <option>Dropped by Prior Carrier</option>
-              <option>Other</option>
+              <option>Less than High School</option>
+              <option>High School / GED</option>
+              <option>Some College</option>
+              <option>Associate's Degree</option>
+              <option>Bachelor's Degree</option>
+              <option>Master's Degree</option>
+              <option>Doctorate / Professional Degree</option>
             </select>
           </div>
         </div>
-        <div class="gate-panel hidden" id="app-reason-other-panel">
-          <div class="gate-panel-inner">
+      </div>
+
+      <!-- A5: Mailing Address — skipped for existing clients -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A5">
+        <div class="section-divider"><span>Mailing Address</span></div>
+        <div class="field-grid">
+          <div class="field span2" data-new-required>
+            <label>Street Address <span class="req">*</span></label>
+            <input type="text" id="app-addr1" placeholder="123 Main St">
+          </div>
+          <div class="field" data-new-required>
+            <label>City <span class="req">*</span></label>
+            <input type="text" id="app-city">
+          </div>
+          <div class="field" data-new-required>
+            <label>State <span class="req">*</span></label>
+            <select id="app-state">
+              <option value="">-- Select --</option>
+              <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
+              <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
+              <option>FL</option><option>GA</option><option>HI</option><option>ID</option>
+              <option>IL</option><option>IN</option><option>IA</option><option>KS</option>
+              <option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+              <option>MA</option><option>MI</option><option>MN</option><option>MS</option>
+              <option selected>MO</option><option>MT</option><option>NE</option><option>NV</option>
+              <option>NH</option><option>NJ</option><option>NM</option><option>NY</option>
+              <option>NC</option><option>ND</option><option>OH</option><option>OK</option>
+              <option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+              <option>SD</option><option>TN</option><option>TX</option><option>UT</option>
+              <option>VT</option><option>VA</option><option>WA</option><option>WV</option>
+              <option>WI</option><option>WY</option>
+            </select>
+          </div>
+          <div class="field" data-new-required>
+            <label>ZIP <span class="req">*</span></label>
+            <input type="text" id="app-zip" placeholder="65000" maxlength="5">
+          </div>
+        </div>
+      </div>
+
+      <!-- A6: Household Members gate + running summary -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A6">
+        <div class="section-divider"><span>Household Members</span></div>
+        <div class="alert alert-info" style="margin-bottom:14px">
+          <div class="alert-icon">ℹ️</div>
+          <div><strong>List all household members age 16 or older.</strong> Required for auto rating and home underwriting. All licensed drivers must be included.</div>
+        </div>
+        <div class="field-grid" style="margin-bottom:16px">
+          <div class="field">
+            <label>Total Household Members (all ages)</label>
+            <input type="number" id="app-household-total" placeholder="e.g. 4" min="1">
+          </div>
+        </div>
+        <div id="hh-members-summary" style="margin-bottom:16px"></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Any Other Household Members to Add?</label>
+            <select id="app-hh-gate" onchange="handleHouseholdGate()">
+              <option value="">-- Select --</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- A6a-n / A6b-n loop screens injected here per household member -->
+      <div id="hh-loop-container"></div>
+
+      <!-- A7: Reason for Policy -->
+      <div class="micro-screen hidden" data-micro-step="applicant:A7">
+        <div class="section-divider"><span>Reason for Policy</span></div>
+        <div class="gate-card">
+          <div class="gate-question">
             <div class="field">
-              <label>Please describe <span class="req">*</span></label>
-              <textarea id="app-reason-other" placeholder="Describe the reason for this intake..." style="min-height:80px"></textarea>
+              <label>Reason for Policy <span class="req">*</span></label>
+              <select id="app-reason" onchange="handlePolicyReason()">
+                <option value="">-- Select --</option>
+                <option>New Home Purchase</option>
+                <option>New Vehicle Purchase</option>
+                <option>Moving / Relocation</option>
+                <option>Life Event (Marriage / Divorce / Baby)</option>
+                <option>Rate Shopping</option>
+                <option>Renewal / Rewrite</option>
+                <option>Dropped by Prior Carrier</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="gate-panel hidden" id="app-reason-other-panel">
+            <div class="gate-panel-inner">
+              <div class="field">
+                <label>Please describe <span class="req">*</span></label>
+                <textarea id="app-reason-other" placeholder="Describe the reason for this intake..." style="min-height:80px"></textarea>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="section-divider"><span>Current Coverage</span></div>
+      <!-- A8-{lob}: one Current Coverage screen per selected LOB, injected by renderCarrierBlocks() -->
       <div id="carrier-blocks-container"></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-secondary" onclick="goToLOB()">← Back</button>
-      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+      <button class="btn btn-secondary" onclick="applicantBack()">← Back</button>
+      <button class="btn btn-primary" onclick="applicantContinue()">Continue →</button>
     </div>
   </div>
 

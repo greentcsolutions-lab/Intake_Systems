@@ -1,5 +1,5 @@
 // js/output/collect.js
-// Version 1.2.0 — 2026-07-13
+// Version 1.3.0 — 2026-07-14
 
 
 // ══════════════════════════════════════════
@@ -20,6 +20,13 @@ function handleExistingClient() {
     const reqSpan = fieldDiv.querySelector('.req');
     if (reqSpan) reqSpan.style.display = isExisting ? 'none' : '';
   });
+
+  // No-Scroll Refactor (Stage 1): A2–A5 (Identity/Contact/Background/
+  // Address) are skipped entirely for existing clients, not just
+  // unrequired. Second Named Insured's Yes/No question (A6b-n) is always
+  // asked regardless of client status — only its Occupation/Education
+  // sub-fields are suppressed, via the data-new-required pass above.
+  applySkipBranch('applicant:A1', ['applicant:A2', 'applicant:A3', 'applicant:A4', 'applicant:A5'], isExisting);
 }
 
 // ══════════════════════════════════════════

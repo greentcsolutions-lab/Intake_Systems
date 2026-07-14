@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.2.0 — 2026-07-13
+// Version 1.3.0 — 2026-07-14
 
 
 // ══════════════════════════════════════════
@@ -95,6 +95,14 @@ function exitLoop(gateStepKey) {
   state.steps.splice(gateIdx, 1);
 }
 
+// ── Remove a single loop iteration's steps (Stage 1 — household member
+// removal; reusable by vehicles/home losses/meds in later stages). Unlike
+// startLoop()/addLoopIteration(), this doesn't assume position — it just
+// strips the given keys out of state.steps wherever they are. ──
+function removeLoopIteration(itemStepKeys) {
+  state.steps = state.steps.filter(s => !itemStepKeys.includes(s));
+}
+
 // ── Skip-branch splice (existing-client skip, renters skip, etc.) ──
 // skippableStepKeys: micro-steps to remove/re-insert as a contiguous block
 // immediately after anchorKey, based on a boolean condition.
@@ -121,6 +129,55 @@ function autoAdvanceGate(id) {
 }
 
 // ══════════════════════════════════════════
+// DYNAMIC APPLICANT STEP RESOLUTION (No-Scroll Refactor — Stage 1)
+// Called once at intake start. Builds the initial applicant:A1...A8-{lob}
+// sequence — A2-A5 present unless Existing Client is already checked at
+// that moment (it won't be, on a fresh intake; handleExistingClient()
+// applies the same skip live via applySkipBranch() once the person
+// toggles it on screen A1). Household loop iterations (A6a-n/A6b-n) are
+// added later by addHouseholdMember() and are NOT part of this initial
+// build — this only runs before any members exist.
+// ══════════════════════════════════════════
+function resolveApplicantSteps() {
+  const isExisting = document.getElementById('app-existing-client')?.checked || false;
+  const seq = ['applicant:A1'];
+  if (!isExisting) seq.push('applicant:A2', 'applicant:A3', 'applicant:A4', 'applicant:A5');
+  seq.push('applicant:A6', 'applicant:A7');
+  state.selectedLOBs.forEach(lob => seq.push(`applicant:A8-${lob}`));
+
+  state.steps = state.steps.filter(s => macroOf(s) !== 'applicant');
+  state.steps.unshift(...seq);
+}
+
+// ── Applicant Back/Continue dispatchers ──
+// A single global btn-row serves every applicant micro-screen (matches the
+// no-scroll design — one field/group visible at a time, nav pinned below).
+// Most screens use plain validate-then-advance; the household gate and the
+// last screen of each loop iteration need to jump to a specific step
+// instead of the next array index, so those are special-cased here rather
+// than baked into nextStep()/prevStep() themselves.
+function applicantContinue() {
+  const key = state.steps[state.currentStepIndex];
+  if (key === 'applicant:A6') {
+    handleHouseholdGate();
+    return;
+  }
+  if (key && key.startsWith('applicant:A6b-')) {
+    finishHouseholdLoopIteration();
+    return;
+  }
+  if (validateStep()) nextStep();
+}
+
+function applicantBack() {
+  if (state.currentStepIndex === 0) {
+    goToLOB();
+    return;
+  }
+  prevStep();
+}
+
+// ══════════════════════════════════════════
 // LOB SELECTION
 // ══════════════════════════════════════════
 document.querySelectorAll('.lob-card').forEach(card => {
@@ -140,8 +197,10 @@ function startIntake() {
   if (!lobs.length) { alert('Please select at least one line of business.'); return; }
   state.selectedLOBs = lobs;
 
-  // Build step order
-  const steps = ['applicant'];
+  // Build step order — non-applicant macro steps first, then prepend the
+  // resolved applicant micro-step sequence (which needs selectedLOBs set,
+  // for its A8-{lob} carrier screens).
+  const steps = [];
   lobs.forEach(lob => {
     if (lob === 'auto') {
       steps.push('auto-vehicles', 'auto-coverage');
@@ -155,15 +214,18 @@ function startIntake() {
   });
   steps.push('review');
   state.steps = steps;
+  resolveApplicantSteps();
   state.currentStepIndex = 0;
 
   // Reset repeater containers and counts before init
-  ['vehicles-container', 'vehicles-cov-container', 'drivers-container',
+  ['vehicles-container', 'vehicles-cov-container', 'hh-loop-container',
    'medications-container', 'siding-materials-container', 'wall-materials-container',
    'floor-materials-container'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
+  const hhSummaryEl = document.getElementById('hh-members-summary');
+  if (hhSummaryEl) hhSummaryEl.innerHTML = '';
   state.vehicleCount = 0;
   state.driverCount = 0;
   window.medCount = 0;
@@ -197,53 +259,54 @@ function renderCarrierBlocks(lobs) {
   lobs.forEach(lob => {
     const label = CARRIER_LOB_LABELS[lob] || lob;
     const id = `carrier-${lob}`;
-    const block = document.createElement('div');
-    block.className = 'repeater-item';
-    block.id = id;
-    block.style.marginBottom = '14px';
-    block.innerHTML = `
-      <div class="repeater-title" style="margin-bottom:14px">${label}</div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Currently Insured?</label>
-          <select id="${lob}-currently-insured" onchange="handleCarrierInsured('${lob}')">
-            <option value="">-- Select --</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
+    const screen = document.createElement('div');
+    screen.className = 'micro-screen hidden';
+    screen.dataset.microStep = `applicant:A8-${lob}`;
+    screen.innerHTML = `
+      <div class="section-divider"><span>Current Coverage — ${label}</span></div>
+      <div class="repeater-item" id="${id}" style="margin-bottom:14px">
+        <div class="field-grid">
+          <div class="field">
+            <label>Currently Insured?</label>
+            <select id="${lob}-currently-insured" onchange="handleCarrierInsured('${lob}')">
+              <option value="">-- Select --</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field" id="${lob}-carrier-name-field" style="display:none">
+            <label>Carrier Name</label>
+            <input type="text" id="${lob}-carrier-name" placeholder="State Farm, Progressive, etc.">
+          </div>
+          <div class="field" id="${lob}-carrier-policy-field" style="display:none">
+            <label>Policy Number <span class="flag">⚡ if known</span></label>
+            <input type="text" id="${lob}-carrier-policy" placeholder="Optional">
+          </div>
+          <div class="field" id="${lob}-carrier-expiry-field" style="display:none">
+            <label>Expiration Date</label>
+            <input type="date" id="${lob}-carrier-expiry">
+          </div>
+          <div class="field" id="${lob}-carrier-premium-field" style="display:none">
+            <label>Current Premium</label>
+            <input type="text" id="${lob}-carrier-premium" placeholder="$1,200/yr">
+          </div>
+          <div class="field" id="${lob}-carrier-lapse-field" style="display:none">
+            <label>Reason for Lapse</label>
+            <select id="${lob}-carrier-lapse" onchange="handleCarrierLapse('${lob}')">
+              <option value="">-- Select --</option>
+              <option>Non-payment</option>
+              <option>Cancelled by carrier</option>
+              <option>Never had insurance</option>
+              <option>Other</option>
+            </select>
+          </div>
         </div>
-        <div class="field" id="${lob}-carrier-name-field" style="display:none">
-          <label>Carrier Name</label>
-          <input type="text" id="${lob}-carrier-name" placeholder="State Farm, Progressive, etc.">
+        <div id="${lob}-carrier-lapse-alert" class="alert alert-warn hidden" style="margin-top:10px">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>${label} Coverage Lapse</strong> Most carriers will rate for lapse. Document reason and duration carefully.</div>
         </div>
-        <div class="field" id="${lob}-carrier-policy-field" style="display:none">
-          <label>Policy Number <span class="flag">⚡ if known</span></label>
-          <input type="text" id="${lob}-carrier-policy" placeholder="Optional">
-        </div>
-        <div class="field" id="${lob}-carrier-expiry-field" style="display:none">
-          <label>Expiration Date</label>
-          <input type="date" id="${lob}-carrier-expiry">
-        </div>
-        <div class="field" id="${lob}-carrier-premium-field" style="display:none">
-          <label>Current Premium</label>
-          <input type="text" id="${lob}-carrier-premium" placeholder="$1,200/yr">
-        </div>
-        <div class="field" id="${lob}-carrier-lapse-field" style="display:none">
-          <label>Reason for Lapse</label>
-          <select id="${lob}-carrier-lapse" onchange="handleCarrierLapse('${lob}')">
-            <option value="">-- Select --</option>
-            <option>Non-payment</option>
-            <option>Cancelled by carrier</option>
-            <option>Never had insurance</option>
-            <option>Other</option>
-          </select>
-        </div>
-      </div>
-      <div id="${lob}-carrier-lapse-alert" class="alert alert-warn hidden" style="margin-top:10px">
-        <div class="alert-icon">⚠️</div>
-        <div><strong>${label} Coverage Lapse</strong> Most carriers will rate for lapse. Document reason and duration carefully.</div>
       </div>`;
-    container.appendChild(block);
+    container.appendChild(screen);
   });
 }
 
@@ -373,6 +436,11 @@ function renderStep() {
         screen.classList.toggle('hidden', screen.dataset.microStep !== key);
       });
     }
+  }
+
+  // When entering the household-members gate, refresh the running summary
+  if (key === 'applicant:A6') {
+    refreshHouseholdSummary();
   }
 
   // When entering auto coverage screen, rebuild physical damage blocks
