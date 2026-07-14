@@ -1,5 +1,5 @@
 /* ss/styles.css */
-/* Version 1.0.0 — 2026-07-09 */
+/* Version 1.1.0 — 2026-07-13 */
 
 :root {
     --navy: #1a2744;
@@ -104,6 +104,26 @@
     font-weight: 500;
     letter-spacing: 0.3px;
     text-transform: uppercase;
+  }
+
+  /* ── SUB-PROGRESS (No-Scroll Refactor — micro-step position within a macro-step) ── */
+  .sub-progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    margin: -20px 0 20px;
+  }
+
+  /* ── MICRO-SCREEN (No-Scroll Refactor — one field/group per screen) ──
+     Distinct from .gate-panel's grid-template-rows collapse: this is a
+     screen-to-screen swap, not an in-place reveal. */
+  .micro-screen {
+    animation: micro-screen-in 0.25s ease;
+  }
+  @keyframes micro-screen-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   /* ── STEP NAV ── */

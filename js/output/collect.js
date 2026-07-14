@@ -1,5 +1,5 @@
 // js/output/collect.js
-// Version 1.1.0 — 2026-07-09
+// Version 1.2.0 — 2026-07-13
 
 
 // ══════════════════════════════════════════
@@ -39,6 +39,7 @@ function handlePolicyReason() {
 // ══════════════════════════════════════════
 function validateStep() {
   const key = state.steps[state.currentStepIndex];
+  const macro = macroOf(key);
 
   const panelMap = {
     'applicant':      'step-applicant',
@@ -52,14 +53,21 @@ function validateStep() {
     'life-meds':      'step-life-meds',
     'review':         'step-review',
   };
-  const panelId = panelMap[key] || `step-${key}`;
+  const panelId = panelMap[macro] || `step-${macro}`;
   const panel = document.getElementById(panelId);
   if (!panel) return true;
 
+  // If this macro has been split into micro-screens, scope error-clearing
+  // and (below) validation scanning to the active screen only. Panels with
+  // no .micro-screen children behave exactly as before — scope is the
+  // whole panel.
+  const activeScreen = panel.querySelector(`.micro-screen[data-micro-step="${key}"]`);
+  const scope = activeScreen || panel;
+
   // Clear prior errors
-  panel.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
-  panel.querySelectorAll('.field-error-msg').forEach(el => el.remove());
-  const oldBanner = panel.querySelector('.validation-banner');
+  scope.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+  scope.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+  const oldBanner = scope.querySelector('.validation-banner');
   if (oldBanner) oldBanner.remove();
 
   const errors = [];
@@ -103,7 +111,7 @@ function validateStep() {
   // ══════════════════════════════════════════
   // APPLICANT
   // ══════════════════════════════════════════
-  if (key === 'applicant') {
+  if (macro === 'applicant') {
     const isExisting = document.getElementById('app-existing-client')?.checked;
 
     flagById('app-first', 'First Name');
@@ -136,7 +144,7 @@ function validateStep() {
   // ══════════════════════════════════════════
   // AUTO — VEHICLES
   // ══════════════════════════════════════════
-  else if (key === 'auto-vehicles') {
+  else if (macro === 'auto-vehicles') {
     for (let i = 1; i <= state.vehicleCount; i++) {
       if (!document.getElementById(`v${i}-year`)) continue;
       flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
@@ -148,7 +156,7 @@ function validateStep() {
   // ══════════════════════════════════════════
   // AUTO — COVERAGE
   // ══════════════════════════════════════════
-  else if (key === 'auto-coverage') {
+  else if (macro === 'auto-coverage') {
     for (let i = 1; i <= state.vehicleCount; i++) {
       if (!document.getElementById(`v${i}-year`)) continue;
       const ownership = document.getElementById(`v${i}-ownership`)?.value;
@@ -168,14 +176,14 @@ function validateStep() {
   // ══════════════════════════════════════════
   // HOME — TYPE
   // ══════════════════════════════════════════
-  else if (key === 'home-type') {
+  else if (macro === 'home-type') {
     flagById('home-type', 'Policy Type');
   }
 
   // ══════════════════════════════════════════
   // HOME — DETAILS
   // ══════════════════════════════════════════
-  else if (key === 'home-details') {
+  else if (macro === 'home-details') {
     const type = document.getElementById('home-type')?.value || '';
     const isRenters = type === 'Renters (HO-4)';
 
@@ -217,14 +225,14 @@ function validateStep() {
   // ══════════════════════════════════════════
   // HOME — COVERAGE
   // ══════════════════════════════════════════
-  else if (key === 'home-coverage') {
+  else if (macro === 'home-coverage') {
     scanContainer(panel);
   }
 
   // ══════════════════════════════════════════
   // LIFE — PRODUCT
   // ══════════════════════════════════════════
-  else if (key === 'life-product') {
+  else if (macro === 'life-product') {
     flagById('life-type', 'Product Type');
   }
 
@@ -245,7 +253,7 @@ function validateStep() {
   });
 
   // ── Banner ──
-  const firstCard = panel.querySelector('.card');
+  const firstCard = scope.querySelector('.card') || panel.querySelector('.card');
   if (firstCard) {
     const banner = document.createElement('div');
     banner.className = 'validation-banner';

@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.1.0 — 2026-07-09
+// Version 1.2.0 — 2026-07-13
 
 
 // ══════════════════════════════════════════
@@ -15,6 +15,110 @@ const state = {
 };
 
 const LOB_META = {};
+
+// ══════════════════════════════════════════
+// MICRO-STEP ENGINE (No-Scroll Refactor — Stage 0)
+// ══════════════════════════════════════════
+// Step keys are either bare macro keys ("auto-vehicles") — unrefactored,
+// rendered as a single screen exactly like today — or "macroKey:microKey"
+// ("applicant:A1") — refactored, rendered as one .micro-screen at a time
+// within that macro's panel. macroOf() is the single place that resolves
+// a step key down to its macro identity; every other function that needs
+// macro identity should call this rather than re-deriving it.
+function macroOf(key) {
+  return key && key.includes(':') ? key.split(':')[0] : key;
+}
+
+function microOf(key) {
+  return key && key.includes(':') ? key.split(':')[1] : null;
+}
+
+// ── Sub-progress ("Applicant — Step 3 of 6") ──
+// Only meaningful within a contiguous run of steps sharing the same macro
+// key. Mirrors the grouping logic in buildStepNav()'s pill-collapsing loop.
+function updateSubProgress() {
+  const el = document.getElementById('subProgressLabel');
+  if (!el) return;
+
+  const idx = state.currentStepIndex;
+  const macro = macroOf(state.steps[idx]);
+
+  // Only show sub-progress for refactored (micro-stepped) macros
+  if (!state.steps[idx].includes(':')) {
+    el.textContent = '';
+    el.classList.add('hidden');
+    return;
+  }
+
+  let start = idx;
+  while (start > 0 && macroOf(state.steps[start - 1]) === macro) start--;
+  let end = idx;
+  while (end < state.steps.length - 1 && macroOf(state.steps[end + 1]) === macro) end++;
+
+  const position = idx - start + 1;
+  const total = end - start + 1;
+  const macroLabel = getStepLabel(macro);
+
+  el.textContent = `${macroLabel} — Step ${position} of ${total}`;
+  el.classList.remove('hidden');
+}
+
+// ── Yes/No gate + loop splice (reusable across household members,
+// vehicles, home losses, medications in later stages) ──
+// itemStepKeys: the micro-step keys for ONE loop iteration, e.g.
+// ['applicant:A6a', 'applicant:A6b']. Inserted immediately after gateStepKey
+// every time the gate advances with an affirmative answer.
+function startLoop(gateStepKey, itemStepKeys) {
+  const gateIdx = state.steps.indexOf(gateStepKey);
+  if (gateIdx === -1) return;
+  const alreadyPresent = itemStepKeys.every((k, i) => state.steps[gateIdx + 1 + i] === k);
+  if (alreadyPresent) return;
+  state.steps.splice(gateIdx + 1, 0, ...itemStepKeys);
+}
+
+function addLoopIteration(gateStepKey, itemStepKeys) {
+  const gateIdx = state.steps.indexOf(gateStepKey);
+  if (gateIdx === -1) return;
+  // Insert right after the gate so newest iteration is next, ahead of
+  // any prior iterations already spliced in — gate always re-fires after.
+  state.steps.splice(gateIdx + 1, 0, ...itemStepKeys);
+}
+
+function exitLoop(gateStepKey) {
+  // Minimal stub for Stage 0. Removing the gate itself and deciding what
+  // comes next is macro-specific (mirrors resolveHomeSteps()/
+  // resolveLifeSteps()) — Stage 1+ will supply that logic per loop rather
+  // than a generic implementation here, since "loop is done" behavior
+  // differs per macro-step.
+  const gateIdx = state.steps.indexOf(gateStepKey);
+  if (gateIdx === -1) return;
+  state.steps.splice(gateIdx, 1);
+}
+
+// ── Skip-branch splice (existing-client skip, renters skip, etc.) ──
+// skippableStepKeys: micro-steps to remove/re-insert as a contiguous block
+// immediately after anchorKey, based on a boolean condition.
+function applySkipBranch(anchorKey, skippableStepKeys, shouldSkip) {
+  const anchorIdx = state.steps.indexOf(anchorKey);
+  if (anchorIdx === -1) return;
+
+  // Remove any of skippableStepKeys currently present, wherever they are
+  state.steps = state.steps.filter(s => !skippableStepKeys.includes(s));
+
+  if (!shouldSkip) {
+    state.steps.splice(anchorIdx + 1, 0, ...skippableStepKeys);
+  }
+}
+
+// ── Auto-advance handler for Yes/No gate screens ──
+// Attach via onchange on gate-style selects/chips instead of requiring
+// an explicit Continue tap. Reuses whatever control pattern is already in
+// place (select or check-chip) — no new gate UI is introduced.
+function autoAdvanceGate(id) {
+  const el = document.getElementById(id);
+  if (!el || !el.value) return;
+  if (validateStep()) nextStep();
+}
 
 // ══════════════════════════════════════════
 // LOB SELECTION
@@ -197,10 +301,11 @@ function buildStepNav() {
   };
 
   function stepGroup(s) {
-    if (AUTO_STEPS.includes(s)) return 'auto';
-    if (HOME_STEPS.includes(s)) return 'home';
-    if (LIFE_STEPS.includes(s)) return 'life';
-    return s;
+    const m = macroOf(s);
+    if (AUTO_STEPS.includes(m)) return 'auto';
+    if (HOME_STEPS.includes(m)) return 'home';
+    if (LIFE_STEPS.includes(m)) return 'life';
+    return m;
   }
 
   // Build a de-duplicated pill list — sub-steps collapse into one pill
@@ -239,6 +344,7 @@ function renderStep() {
   document.querySelectorAll('.step-panel').forEach(p => p.classList.add('hidden'));
 
   const key = state.steps[state.currentStepIndex];
+  const macro = macroOf(key);
 
   const panelMap = {
     'applicant':      'step-applicant',
@@ -252,21 +358,35 @@ function renderStep() {
     'life-meds':      'step-life-meds',
     'review':         'step-review',
   };
-  const panelId = panelMap[key] || `step-${key}`;
-  document.getElementById(panelId)?.classList.remove('hidden');
+  const panelId = panelMap[macro] || `step-${macro}`;
+  const panel = document.getElementById(panelId);
+  panel?.classList.remove('hidden');
+
+  // Micro-step display: if this macro's panel has been refactored into
+  // .micro-screen segments, show only the one matching this step key.
+  // Panels with no .micro-screen children (unrefactored macros) are
+  // unaffected — the whole panel renders as one screen, same as today.
+  if (panel) {
+    const microScreens = panel.querySelectorAll('.micro-screen');
+    if (microScreens.length) {
+      microScreens.forEach(screen => {
+        screen.classList.toggle('hidden', screen.dataset.microStep !== key);
+      });
+    }
+  }
 
   // When entering auto coverage screen, rebuild physical damage blocks
-  if (key === 'auto-coverage') {
+  if (macro === 'auto-coverage') {
     refreshVehicleCovBlocks();
   }
 
   // When entering home-details, show/hide owner fields based on policy type
-  if (key === 'home-details') {
+  if (macro === 'home-details') {
     applyHomeTypeToDetails();
   }
 
   // When entering the meds screen, ensure at least one med row exists
-  if (key === 'life-meds') {
+  if (macro === 'life-meds') {
     const container = document.getElementById('medications-container');
     if (container && container.children.length === 0) {
       addMedication();
@@ -274,7 +394,7 @@ function renderStep() {
   }
 
   // When entering medicare screen, show the correct current plan block
-  if (key === 'life-medicare') {
+  if (macro === 'life-medicare') {
     const type = document.getElementById('life-type')?.value;
     const suppBlock = document.getElementById('life-current-supp-block');
     const advBlock  = document.getElementById('life-current-adv-block');
@@ -288,12 +408,13 @@ function renderStep() {
   const pct = Math.round(((state.currentStepIndex + 1) / state.steps.length) * 100);
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressLabel').textContent =
-    `Step ${state.currentStepIndex + 1} of ${state.steps.length} — ${getStepLabel(key)}`;
+    `Step ${state.currentStepIndex + 1} of ${state.steps.length} — ${getStepLabel(macro)}`;
+  updateSubProgress();
 
   // Nav pills
   buildStepNav();
 
-  if (key === 'review') buildReview();
+  if (macro === 'review') buildReview();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -366,11 +487,12 @@ function resolveLifeSteps() {
 
 function nextStep() {
   const currentKey = state.steps[state.currentStepIndex];
+  const currentMacro = macroOf(currentKey);
 
-  if (currentKey === 'home-type') {
+  if (currentMacro === 'home-type') {
     resolveHomeSteps();
   }
-  if (currentKey === 'life-product') {
+  if (currentMacro === 'life-product') {
     resolveLifeSteps();
   }
 
