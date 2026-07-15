@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.5.0 — 2026-07-14
+// Version 1.6.0 — 2026-07-15
 
 
 // ══════════════════════════════════════════
@@ -53,6 +53,27 @@ function macroOf(key) {
 
 function microOf(key) {
   return key && key.includes(':') ? key.split(':')[1] : null;
+}
+
+// ── Main progress-bar checkpoint (No-Scroll Refactor — Stage 1 follow-up) ──
+// The household-member loop (applicant:A6a-n / applicant:A6b-n) splices new
+// step keys into state.steps every time a member is added, which would
+// otherwise make the main progress bar lurch forward through each member's
+// screens and then jump backward when the loop returns to the gate. This
+// computes position/total against a "checkpoint" list with every loop
+// iteration collapsed out entirely — mirrors how buildStepNav() already
+// collapses the whole Applicant macro into a single pill, one level
+// deeper (collapsing just the loop, not the whole macro). While the
+// person is anywhere inside the loop, position is pinned to the gate's
+// single slot, so the bar holds still until "No" is chosen and A7 (or
+// whatever follows) is reached.
+function getProgressCheckpoint() {
+  const checkpointSteps = state.steps.filter(s => !/^applicant:A6[ab]-/.test(s));
+  const currentKey = state.steps[state.currentStepIndex];
+  const isInLoop = /^applicant:A6[ab]-/.test(currentKey);
+  const effectiveKey = isInLoop ? 'applicant:A6' : currentKey;
+  const position = checkpointSteps.indexOf(effectiveKey);
+  return { position: position === -1 ? 0 : position, total: checkpointSteps.length };
 }
 
 // ── Sub-progress ("Applicant — Step 3 of 6") ──
@@ -501,11 +522,15 @@ function renderStep() {
     if (acaBlock)  acaBlock.style.display  = type === 'Health / ACA'        ? 'block' : 'none';
   }
 
-  // Progress
-  const pct = Math.round(((state.currentStepIndex + 1) / state.steps.length) * 100);
+  // Progress — household-loop iterations are excluded from both the
+  // numerator and denominator (see getProgressCheckpoint()), so the main
+  // bar holds steady while members are added or removed and only advances
+  // once the loop is actually exited.
+  const { position, total } = getProgressCheckpoint();
+  const pct = Math.round(((position + 1) / total) * 100);
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressLabel').textContent =
-    `Step ${state.currentStepIndex + 1} of ${state.steps.length} — ${getStepLabel(macro)}`;
+    `Step ${position + 1} of ${total} — ${getStepLabel(macro)}`;
   updateSubProgress();
 
   // Nav pills

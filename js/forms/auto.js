@@ -1,5 +1,5 @@
 // js/forms/auto.js
-// Version 1.2.0 — 2026-07-14
+// Version 1.3.0 — 2026-07-15
 
 
 // ══════════════════════════════════════════
@@ -406,6 +406,27 @@ function refreshHouseholdSummary() {
   el.innerHTML = rows || '<div class="hh-summary-empty">No additional household members yet.</div>';
 }
 
+// Sets the hidden app-hh-gate value and the buttons' visual selected state,
+// then defers to the existing handleHouseholdGate() unchanged — the button
+// UI is purely a presentation swap over the same gate logic.
+function selectHouseholdGate(val) {
+  const gateEl = document.getElementById('app-hh-gate');
+  if (gateEl) gateEl.value = val;
+  document.getElementById('app-hh-gate-yes')?.classList.toggle('selected', val === 'Yes');
+  document.getElementById('app-hh-gate-no')?.classList.toggle('selected', val === 'No');
+  handleHouseholdGate();
+}
+
+// Clears both the hidden value and the buttons' selected state together —
+// used whenever the gate needs to present as unanswered again (loop-back,
+// max-members block).
+function resetHouseholdGateUI() {
+  const gateEl = document.getElementById('app-hh-gate');
+  if (gateEl) gateEl.value = '';
+  document.getElementById('app-hh-gate-yes')?.classList.remove('selected');
+  document.getElementById('app-hh-gate-no')?.classList.remove('selected');
+}
+
 function handleHouseholdGate() {
   const gateEl = document.getElementById('app-hh-gate');
   const gateVal = gateEl?.value;
@@ -414,7 +435,7 @@ function handleHouseholdGate() {
   if (gateVal === 'Yes') {
     if (activeHouseholdCount() >= 5) {
       alert('Maximum of 5 additional household members reached.');
-      gateEl.value = '';
+      resetHouseholdGateUI();
       return;
     }
     const n = addHouseholdMember();
@@ -435,13 +456,12 @@ function handleHouseholdGate() {
 
 // Called from the last screen of a loop iteration (A6b-n's Continue) to
 // jump back to the A6 gate instead of falling through to A7 — this is the
-// "loop back to gate" behavior. Resetting the gate's value here (rather
-// than on every renderStep()) is what lets handleHouseholdGate() /
-// autoAdvanceGate fire again on re-entry.
+// "loop back to gate" behavior. Resetting the gate's UI here (rather than
+// on every renderStep()) is what lets handleHouseholdGate() fire again on
+// re-entry.
 function finishHouseholdLoopIteration() {
   if (!validateStep()) return;
-  const gateEl = document.getElementById('app-hh-gate');
-  if (gateEl) gateEl.value = '';
+  resetHouseholdGateUI();
   state.currentStepIndex = state.steps.indexOf('applicant:A6');
   renderStep();
 }
