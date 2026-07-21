@@ -1,28 +1,79 @@
 // js/forms/auto.js
-// Version 1.3.0 — 2026-07-15
+// Version 2.0.0 — 2026-07-17
 
 
 // ══════════════════════════════════════════
-// VEHICLE REPEATER (Personal Auto)
+// VEHICLE MICRO-STEP LOOP (No-Scroll Refactor — Stage 2)
+// Each vehicle is its own self-contained loop iteration of 4 screens:
+// Info → Usage → Ownership → Physical Damage → back to the "Add another
+// vehicle?" gate (VGATE). Vehicle 1 is mandatory and built automatically
+// at intake start; Vehicle 2+ are spliced in via the gate exactly like the
+// applicant household-member loop (Stage 1) — same fixed-anchor splice
+// pattern, same high-water-mark removal pattern.
 // ══════════════════════════════════════════
+
+function vehicleLabel(n) {
+  const year = document.getElementById(`v${n}-year`)?.value.trim();
+  const make = document.getElementById(`v${n}-make`)?.value.trim();
+  const model = document.getElementById(`v${n}-model`)?.value.trim();
+  return [year, make, model].filter(Boolean).join(' ') || `Vehicle ${n}`;
+}
+
+// Refreshes the dynamic screen titles for a vehicle's Usage/Ownership/
+// Physical Damage screens from whatever Year/Make/Model have been entered
+// so far. Called every time renderStep() enters one of this vehicle's
+// screens — cheap, and always reflects the latest Info-screen values.
+function updateVehicleScreenTitles(n) {
+  const label = vehicleLabel(n);
+  const usageTitle = document.getElementById(`v${n}-usage-title`);
+  const ownershipTitle = document.getElementById(`v${n}-ownership-title`);
+  const physdmgTitle = document.getElementById(`v${n}-physdmg-title`);
+  if (usageTitle) usageTitle.textContent = `${label} — Usage`;
+  if (ownershipTitle) ownershipTitle.textContent = `Is there a lienholder for the ${label}?`;
+  if (physdmgTitle) physdmgTitle.textContent = `${label} — Physical Damage`;
+}
+
+// Comp/Coll required-flag display on the Physical Damage screen is driven
+// by the Ownership screen's answer, which is always filled in first in
+// this flow — no need to scan all vehicles like the old aggregate block
+// did. Also re-syncs the glass gate-panel to the current Comp value.
+function updateVehiclePhysDmgRequirement(n) {
+  const ownership = document.getElementById(`v${n}-ownership`)?.value;
+  const isLien = ownership === 'Financed' || ownership === 'Leased';
+  const req = isLien ? ' <span class="req">*</span>' : '';
+  const flag = isLien ? ' <span class="flag">⚡ lender required</span>' : '';
+  const compLabel = document.getElementById(`v${n}-comp-label`);
+  const collLabel = document.getElementById(`v${n}-coll-label`);
+  if (compLabel) compLabel.innerHTML = `Comprehensive${req}${flag}`;
+  if (collLabel) collLabel.innerHTML = `Collision${req}${flag}`;
+  handleGlass(n);
+}
+
 function addVehicle() {
   state.vehicleCount++;
   const n = state.vehicleCount;
-  const c = document.getElementById('vehicles-container');
-  const div = document.createElement('div');
-  div.className = 'repeater-item';
-  div.id = `vehicle-${n}`;
-  div.innerHTML = `
-    <div class="repeater-header">
-      <div class="repeater-title">Vehicle ${n}</div>
-      ${n > 1 ? `<button class="btn-remove" onclick="removeItem('vehicle-${n}')">Remove</button>` : ''}
-    </div>
+  const c = document.getElementById('vehicles-loop-container');
+
+  const info = document.createElement('div');
+  info.className = 'micro-screen hidden';
+  info.dataset.microStep = `auto-vehicles:V${n}-info`;
+  info.innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:16px">Vehicle ${n}</div>
     <div class="field-grid three">
-      <div class="field"><label>Year <span class="req">*</span></label><input type="number" id="v${n}-year" placeholder="2020" min="1950" max="2026" onchange="refreshVehicleCovBlocks()"></div>
+      <div class="field"><label>Year <span class="req">*</span></label><input type="number" id="v${n}-year" placeholder="2020" min="1950" max="2026"></div>
       <div class="field"><label>Make <span class="req">*</span></label><input type="text" id="v${n}-make" placeholder="Toyota"></div>
       <div class="field"><label>Model <span class="req">*</span></label><input type="text" id="v${n}-model" placeholder="Camry"></div>
       <div class="field"><label>VIN</label><input type="text" id="v${n}-vin" placeholder="1HGBH41JXMN109186"></div>
       <div class="field"><label>Garaging ZIP</label><input type="text" id="v${n}-zip" placeholder="65000" maxlength="5"></div>
+    </div>`;
+  c.appendChild(info);
+
+  const usage = document.createElement('div');
+  usage.className = 'micro-screen hidden';
+  usage.dataset.microStep = `auto-vehicles:V${n}-usage`;
+  usage.innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:16px" id="v${n}-usage-title">Vehicle ${n} — Usage</div>
+    <div class="field-grid three">
       <div class="field"><label>Primary Use</label>
         <select id="v${n}-use" onchange="handleVehicleUse(${n})">
           <option>Pleasure</option><option>Commute</option>
@@ -58,8 +109,16 @@ function addVehicle() {
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:4px">Formula: (days × 2 × distance × 50 weeks) + estimated personal use</div>
       </div>
-    </div>
-    <div class="field-grid three" style="margin-top:12px">
+    </div>`;
+  c.appendChild(usage);
+
+  const ownership = document.createElement('div');
+  ownership.className = 'micro-screen hidden';
+  ownership.dataset.microStep = `auto-vehicles:V${n}-ownership`;
+  ownership.innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:4px" id="v${n}-ownership-title">Ownership</div>
+    <div class="card-desc" style="margin-bottom:16px">Lienholder status affects which coverages are required.</div>
+    <div class="field-grid">
       <div class="field"><label>Ownership</label>
         <select id="v${n}-ownership" onchange="handleLienholder(${n})">
           <option value="Owned">Owned (no lien)</option>
@@ -81,7 +140,78 @@ function addVehicle() {
         </div>
       </div>
     </div>`;
-  c.appendChild(div);
+  c.appendChild(ownership);
+
+  const physdmg = document.createElement('div');
+  physdmg.className = 'micro-screen hidden';
+  physdmg.dataset.microStep = `auto-vehicles:V${n}-physdmg`;
+  physdmg.innerHTML = `
+    <div class="card-title" style="font-size:16px;margin-bottom:16px" id="v${n}-physdmg-title">Physical Damage</div>
+    <div class="field" style="margin-bottom:16px">
+      <label>Storage / Non-Operational? <span class="flag">⚡ liability does not apply to this vehicle</span></label>
+      <select id="v${n}-storage">
+        <option value="No">No</option>
+        <option value="Yes">Yes</option>
+      </select>
+    </div>
+    <div class="field-grid">
+      <div class="field">
+        <label id="v${n}-comp-label">Comprehensive</label>
+        <select id="v${n}-comp" onchange="handleGlass(${n})">
+          <option value="">None</option>
+          <option>$100 ded</option><option>$250 ded</option>
+          <option>$500 ded</option><option>$1,000 ded</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="v${n}-coll-label">Collision</label>
+        <select id="v${n}-coll">
+          <option value="">None</option>
+          <option>$100 ded</option><option>$250 ded</option>
+          <option>$500 ded</option><option>$1,000 ded</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>GAP Coverage?</label>
+        <select id="v${n}-gap">
+          <option value="No">No</option><option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Custom Parts / Equipment</label>
+        <select id="v${n}-custom">
+          <option value="No">No</option><option value="Yes">Yes</option>
+        </select>
+      </div>
+    </div>
+    <div class="gate-panel hidden" id="v${n}-glass-field">
+      <div class="gate-panel-inner">
+        <div class="field">
+          <label>Glass Coverage</label>
+          <select id="v${n}-glass">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  c.appendChild(physdmg);
+
+  // Splice this vehicle's 4 screens in immediately before the "Add
+  // another vehicle?" gate (fixed anchor) — mirrors
+  // addHouseholdMember()'s splice-before-A7 pattern, but anchored on the
+  // gate itself rather than the section after it, since Vehicle 1 must
+  // land BEFORE the gate is ever seen (it's filled out automatically,
+  // not triggered by a "Yes" answer). Every subsequent vehicle is also
+  // inserted right before the gate's current position, which keeps
+  // repeated "Yes" answers in chronological order (V1, V2, V3, ... gate)
+  // regardless of how many vehicles already exist.
+  const anchorIdx = state.steps.indexOf('auto-vehicles:VGATE');
+  if (anchorIdx !== -1) {
+    state.steps.splice(anchorIdx, 0,
+      `auto-vehicles:V${n}-info`, `auto-vehicles:V${n}-usage`,
+      `auto-vehicles:V${n}-ownership`, `auto-vehicles:V${n}-physdmg`);
+  }
 
   // Auto-populate Vehicle 1 garaging ZIP from applicant address
   if (n === 1) {
@@ -92,7 +222,7 @@ function addVehicle() {
     }
   }
 
-  refreshVehicleCovBlocks();
+  return n;
 }
 
 function handleVehicleUse(n) {
@@ -128,8 +258,6 @@ function handleLienholder(n) {
   const val = document.getElementById(`v${n}-ownership`).value;
   const block = document.getElementById(`v${n}-lien-block`);
   toggleGatePanel(block, val === 'Financed' || val === 'Leased');
-  refreshVehicleCovBlocks();
-  checkLienholderAlert();
 }
 
 function handleGlass(n) {
@@ -144,6 +272,20 @@ function handleGlass(n) {
   }
 }
 
+// ── SR-22 gate (Auto Coverage — Stage 2: converted from dropdown+Continue
+// to Yes/No auto-advance, matching the household gate pattern). "No"
+// auto-advances immediately; "Yes" reveals the reason dropdown in-place
+// (unchanged gate-panel reveal) and waits for the panel's normal Continue
+// button, since a required follow-up field still needs to be captured. ──
+function selectSR22Gate(val) {
+  const el = document.getElementById('auto-sr22');
+  if (el) el.value = val;
+  document.getElementById('auto-sr22-yes')?.classList.toggle('selected', val === 'Yes');
+  document.getElementById('auto-sr22-no')?.classList.toggle('selected', val === 'No');
+  handleSR22();
+  if (val === 'No' && validateStep()) nextStep();
+}
+
 function handleSR22() {
   const val = document.getElementById('auto-sr22')?.value;
   const isYes = val === 'Yes';
@@ -151,107 +293,110 @@ function handleSR22() {
   document.getElementById('sr22-alert')?.classList.toggle('hidden', !isYes);
 }
 
-function checkLienholderAlert() {
-  let hasLien = false;
+// Count of vehicles currently ACTIVE (not removed). Distinct from
+// state.vehicleCount, which is a high-water mark used only for assigning
+// fresh, never-reused element IDs — matches activeHouseholdCount().
+function activeVehicleCount() {
+  let count = 0;
   for (let i = 1; i <= state.vehicleCount; i++) {
-    const el = document.getElementById(`v${i}-ownership`);
-    if (el && (el.value === 'Financed' || el.value === 'Leased')) { hasLien = true; break; }
+    if (document.getElementById(`v${i}-year`)) count++;
   }
-  const alert = document.getElementById('comp-coll-alert');
-  if (alert) alert.classList.toggle('hidden', !hasLien);
+  return count;
 }
 
-function refreshVehicleCovBlocks() {
-  checkLienholderAlert();
-  const container = document.getElementById('vehicles-cov-container');
-  if (!container) return;
-  container.innerHTML = '';
+function refreshVehicleSummary() {
+  const el = document.getElementById('vehicles-summary');
+  if (!el) return;
+  let rows = '';
   for (let i = 1; i <= state.vehicleCount; i++) {
-    const yearEl = document.getElementById(`v${i}-year`);
-    const makeEl = document.getElementById(`v${i}-make`);
-    const modelEl = document.getElementById(`v${i}-model`);
-    if (!yearEl) continue;
-    const label = [yearEl.value, makeEl?.value, modelEl?.value].filter(Boolean).join(' ') || `Vehicle ${i}`;
-    const ownershipEl = document.getElementById(`v${i}-ownership`);
-    const isLien = ownershipEl && (ownershipEl.value === 'Financed' || ownershipEl.value === 'Leased');
-    const req = isLien ? '<span class="req">*</span>' : '';
-    const flag = isLien ? '<span class="flag">⚡ lender required</span>' : '';
-
-    const block = document.createElement('div');
-    block.className = 'repeater-item';
-    block.style.marginTop = '12px';
-    block.innerHTML = `
-      <div class="repeater-title" style="margin-bottom:14px">${label} — Physical Damage</div>
-      <div class="field" style="margin-bottom:16px">
-        <label>Storage / Non-Operational? <span class="flag">⚡ liability does not apply to this vehicle</span></label>
-        <select id="v${i}-storage" onchange="updateStorageNote()">
-          <option value="No">No</option>
-          <option value="Yes">Yes</option>
-        </select>
-      </div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Comprehensive ${req}${flag}</label>
-          <select id="v${i}-comp" onchange="handleGlass(${i})">
-            <option value="">None</option>
-            <option>$100 ded</option><option>$250 ded</option>
-            <option>$500 ded</option><option>$1,000 ded</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Collision ${req}${flag}</label>
-          <select id="v${i}-coll">
-            <option value="">None</option>
-            <option>$100 ded</option><option>$250 ded</option>
-            <option>$500 ded</option><option>$1,000 ded</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>GAP Coverage?</label>
-          <select id="v${i}-gap">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Custom Parts / Equipment</label>
-          <select id="v${i}-custom">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-      </div>
-      <div class="gate-panel hidden" id="v${i}-glass-field">
-        <div class="gate-panel-inner">
-          <div class="field">
-            <label>Glass Coverage</label>
-            <select id="v${i}-glass">
-              <option value="No">No</option>
-              <option value="Yes">Yes</option>
-            </select>
-          </div>
-        </div>
-      </div>`;
-    container.appendChild(block);
+    if (!document.getElementById(`v${i}-year`)) continue; // removed
+    const label = vehicleLabel(i);
+    // Vehicle 1 is mandatory — no Remove option.
+    const removeBtn = i > 1 ? `<button type="button" class="btn-remove" onclick="removeVehicle(${i})">Remove</button>` : '';
+    rows += `<div class="hh-summary-row">
+      <span class="hh-summary-name">${label}</span>
+      ${removeBtn}
+    </div>`;
   }
-  updateStorageNote();
+  el.innerHTML = rows || '<div class="hh-summary-empty">No vehicles added yet.</div>';
 }
 
-function updateStorageNote() {
-  const note = document.getElementById('storage-vehicles-note');
-  const list = document.getElementById('storage-vehicles-list');
-  if (!note || !list) return;
-  const stored = [];
-  for (let i = 1; i <= state.vehicleCount; i++) {
-    if (document.getElementById(`v${i}-storage`)?.value === 'Yes') {
-      const label = [
-        document.getElementById(`v${i}-year`)?.value,
-        document.getElementById(`v${i}-make`)?.value,
-        document.getElementById(`v${i}-model`)?.value,
-      ].filter(Boolean).join(' ') || `Vehicle ${i}`;
-      stored.push(label);
-    }
+function selectVehicleGate(val) {
+  const gateEl = document.getElementById('auto-vgate');
+  if (gateEl) gateEl.value = val;
+  document.getElementById('auto-vgate-yes')?.classList.toggle('selected', val === 'Yes');
+  document.getElementById('auto-vgate-no')?.classList.toggle('selected', val === 'No');
+  handleVehicleGate();
+}
+
+function resetVehicleGateUI() {
+  const gateEl = document.getElementById('auto-vgate');
+  if (gateEl) gateEl.value = '';
+  document.getElementById('auto-vgate-yes')?.classList.remove('selected');
+  document.getElementById('auto-vgate-no')?.classList.remove('selected');
+}
+
+function handleVehicleGate() {
+  const gateEl = document.getElementById('auto-vgate');
+  const gateVal = gateEl?.value;
+  if (!gateVal) { alert('Please select Yes or No.'); return; }
+
+  if (gateVal === 'Yes') {
+    const n = addVehicle();
+    state.currentStepIndex = state.steps.indexOf(`auto-vehicles:V${n}-info`);
+    renderStep();
+  } else {
+    // "No" must jump straight to the first Auto Coverage screen, NOT fall
+    // through to a generic nextStep() — every vehicle already added has
+    // its 4 screens spliced in between the gate and Coverage, so a plain
+    // array-index increment here would land on the next vehicle's Info
+    // screen instead of skipping past all of them. Same fix pattern as
+    // handleHouseholdGate()'s "No" branch in Stage 1.
+    state.currentStepIndex = state.steps.indexOf('auto-coverage:LIAB');
+    renderStep();
   }
-  note.classList.toggle('hidden', stored.length === 0);
-  list.textContent = stored.join(', ');
+}
+
+// Called from the last screen of a vehicle loop iteration (Physical
+// Damage's Continue) to jump back to the VGATE gate instead of falling
+// through to the next vehicle's Info screen (or Coverage) — the "loop
+// back to gate" behavior, same as finishHouseholdLoopIteration().
+function finishVehicleLoopIteration() {
+  if (!validateStep()) return;
+  resetVehicleGateUI();
+  state.currentStepIndex = state.steps.indexOf('auto-vehicles:VGATE');
+  renderStep();
+}
+
+// Dispatcher for the auto-vehicles panel's single Continue button — every
+// vehicle screen validates and advances normally EXCEPT the last screen of
+// each loop iteration (Physical Damage), which must loop back to the gate.
+function vehicleContinue() {
+  const key = state.steps[state.currentStepIndex];
+  const micro = microOf(key);
+  if (micro && micro.endsWith('-physdmg')) {
+    finishVehicleLoopIteration();
+    return;
+  }
+  if (validateStep()) nextStep();
+}
+
+function removeVehicle(n) {
+  if (n === 1) return; // Vehicle 1 is mandatory — cannot be removed.
+  ['info', 'usage', 'ownership', 'physdmg'].forEach(part => {
+    document.querySelector(`.micro-screen[data-micro-step="auto-vehicles:V${n}-${part}"]`)?.remove();
+  });
+  removeLoopIteration([
+    `auto-vehicles:V${n}-info`, `auto-vehicles:V${n}-usage`,
+    `auto-vehicles:V${n}-ownership`, `auto-vehicles:V${n}-physdmg`,
+  ]);
+  // state.vehicleCount is intentionally left unchanged — matches the
+  // household-member/material-row high-water-mark pattern. collectAllData()/
+  // pdf.js/validateStep() already guard on element existence, so a removed
+  // vehicle is simply skipped in output, and future vehicles always get a
+  // fresh, never-reused number.
+  refreshVehicleSummary();
+  renderStep();
 }
 
 // ══════════════════════════════════════════

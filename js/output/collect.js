@@ -1,5 +1,5 @@
 // js/output/collect.js
-// Version 1.3.0 — 2026-07-14
+// Version 1.4.0 — 2026-07-17
 
 
 // ══════════════════════════════════════════
@@ -149,34 +149,42 @@ function validateStep() {
   }
 
   // ══════════════════════════════════════════
-  // AUTO — VEHICLES
+  // AUTO — VEHICLES (No-Scroll Refactor — Stage 2: one micro-screen per
+  // vehicle-field-group, so only the active screen's fields are checked
+  // rather than looping over every vehicle in the panel.)
   // ══════════════════════════════════════════
   else if (macro === 'auto-vehicles') {
-    for (let i = 1; i <= state.vehicleCount; i++) {
-      if (!document.getElementById(`v${i}-year`)) continue;
-      flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
-      flagById(`v${i}-make`,  `Vehicle ${i} — Make`);
-      flagById(`v${i}-model`, `Vehicle ${i} — Model`);
+    const vMatch = microOf(key)?.match(/^V(\d+)-(info|usage|ownership|physdmg)$/);
+    if (vMatch) {
+      const i = vMatch[1];
+      const part = vMatch[2];
+      if (part === 'info') {
+        flagById(`v${i}-year`,  `Vehicle ${i} — Year`);
+        flagById(`v${i}-make`,  `Vehicle ${i} — Make`);
+        flagById(`v${i}-model`, `Vehicle ${i} — Model`);
+      } else if (part === 'physdmg') {
+        const ownership = document.getElementById(`v${i}-ownership`)?.value;
+        if (ownership === 'Financed' || ownership === 'Leased') {
+          const vLabel = [
+            document.getElementById(`v${i}-year`)?.value,
+            document.getElementById(`v${i}-make`)?.value,
+            document.getElementById(`v${i}-model`)?.value,
+          ].filter(Boolean).join(' ') || `Vehicle ${i}`;
+          flagById(`v${i}-comp`, `${vLabel} — Comprehensive (lender required)`);
+          flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
+        }
+      }
     }
   }
 
   // ══════════════════════════════════════════
-  // AUTO — COVERAGE
+  // AUTO — COVERAGE (Stage 2: split into LIAB/UMUIM/ADDL/SR22/FINAL
+  // micro-screens. scanContainer(panel) still only picks up fields in the
+  // currently-active micro-screen, since every other micro-screen is
+  // hidden — the offsetParent check in flagById/scanContainer already
+  // excludes them — same as every other refactored macro.)
   // ══════════════════════════════════════════
   else if (macro === 'auto-coverage') {
-    for (let i = 1; i <= state.vehicleCount; i++) {
-      if (!document.getElementById(`v${i}-year`)) continue;
-      const ownership = document.getElementById(`v${i}-ownership`)?.value;
-      if (ownership === 'Financed' || ownership === 'Leased') {
-        const vLabel = [
-          document.getElementById(`v${i}-year`)?.value,
-          document.getElementById(`v${i}-make`)?.value,
-          document.getElementById(`v${i}-model`)?.value,
-        ].filter(Boolean).join(' ') || `Vehicle ${i}`;
-        flagById(`v${i}-comp`, `${vLabel} — Comprehensive (lender required)`);
-        flagById(`v${i}-coll`, `${vLabel} — Collision (lender required)`);
-      }
-    }
     scanContainer(panel);
   }
 

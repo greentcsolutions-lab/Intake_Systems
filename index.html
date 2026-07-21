@@ -1,5 +1,5 @@
 <!-- index.html -->
-<!-- Version 1.3.0 — 2026-07-15 -->
+<!-- Version 1.4.0 — 2026-07-17 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -249,156 +249,189 @@
     </div>
   </div>
 
-  <!-- PERSONAL AUTO: VEHICLES -->
+  <!-- PERSONAL AUTO: VEHICLES (No-Scroll Refactor — Stage 2) -->
   <div id="step-auto-vehicles" class="step-panel hidden">
     <div class="card">
       <div class="card-title">🚗 Vehicles</div>
       <div class="card-desc">Add all vehicles to be insured. Include year, make, model, and ownership details.</div>
-      <div id="vehicles-container"></div>
-      <button class="btn-add" onclick="addVehicle()">+ Add Vehicle</button>
+
+      <!-- V{n}-info / V{n}-usage / V{n}-ownership / V{n}-physdmg screens
+           injected here per vehicle by addVehicle() -->
+      <div id="vehicles-loop-container"></div>
+
+      <!-- VGATE: Add another vehicle? -->
+      <div class="micro-screen hidden" data-micro-step="auto-vehicles:VGATE">
+        <div class="section-divider"><span>Vehicles Added</span></div>
+        <div id="vehicles-summary" style="margin-bottom:16px"></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Add Another Vehicle?</label>
+            <div class="yn-btn-group">
+              <button type="button" class="yn-btn" id="auto-vgate-yes" onclick="selectVehicleGate('Yes')">Yes</button>
+              <button type="button" class="yn-btn" id="auto-vgate-no" onclick="selectVehicleGate('No')">No</button>
+            </div>
+            <input type="hidden" id="auto-vgate" value="">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="prevStep()">← Back</button>
-      <button class="btn btn-primary" onclick="if(validateStep()) nextStep()">Continue →</button>
+      <button class="btn btn-primary" id="auto-vehicles-continue-btn" onclick="vehicleContinue()">Continue →</button>
     </div>
   </div>
 
-  <!-- PERSONAL AUTO: COVERAGE -->
+  <!-- PERSONAL AUTO: COVERAGE (No-Scroll Refactor — Stage 2) -->
   <div id="step-auto-coverage" class="step-panel hidden">
     <div class="card">
       <div class="card-title">🚗 Auto Coverage</div>
-      <div class="card-desc">Select liability limits and physical damage coverage for each vehicle.</div>
+      <div class="card-desc">Select liability limits and additional coverage options.</div>
 
-      <div class="section-divider"><span>Liability &amp; Additional Coverage</span></div>
-      <div id="storage-vehicles-note" class="alert alert-info hidden" style="margin-bottom:14px">
-        <div class="alert-icon">ℹ️</div>
-        <div><strong>Storage / Non-Operational Vehicles</strong> Liability does not apply to: <span id="storage-vehicles-list"></span></div>
-      </div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Bodily Injury Liability <span class="req">*</span></label>
-          <select id="auto-bi">
-            <option value="">-- Select --</option>
-            <option>25/50</option><option>50/100</option><option>100/300</option>
-            <option>250/500</option><option>500/500</option><option>1000/1000</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Property Damage Liability <span class="req">*</span></label>
-          <select id="auto-pd">
-            <option value="">-- Select --</option>
-            <option>$25,000</option><option>$50,000</option><option>$100,000</option>
-            <option>$250,000</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Uninsured Motorist BI <span class="req">*</span> <span class="flag">⚡ MO required</span></label>
-          <select id="auto-umbi">
-            <option value="25/50">25/50</option>
-            <option value="50/100">50/100</option>
-            <option value="100/300">100/300</option>
-            <option value="250/500">250/500</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Underinsured Motorist BI <span class="flag">⚡ optional — must offer</span></label>
-          <select id="auto-uimbi">
-            <option value="">-- None --</option>
-            <option value="25/50">25/50</option>
-            <option value="50/100">50/100</option>
-            <option value="100/300">100/300</option>
-            <option value="250/500">250/500</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Medical Payments</label>
-          <select id="auto-medpay">
-            <option value="">-- None --</option>
-            <option>$1,000</option><option>$2,000</option><option>$5,000</option><option>$10,000</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Roadside Assistance</label>
-          <select id="auto-roadside">
-            <option value="">-- None --</option>
-            <option>Basic</option><option>Enhanced</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Rental Reimbursement</label>
-          <select id="auto-rental">
-            <option value="">-- None --</option>
-            <option>$30/day - $900 max</option>
-            <option>$40/day - $1,200 max</option>
-            <option>$50/day - $1,500 max</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="section-divider"><span>Physical Damage</span></div>
-      <div id="comprehensive-collision-block">
-        <div id="comp-coll-alert" class="alert alert-warn hidden">
-          <div class="alert-icon">⚠️</div>
-          <div><strong>Lienholder / Lease Detected</strong> Comprehensive and Collision coverage are <strong>required</strong> by lenders. Deductibles must be within lender guidelines (typically $500 max).</div>
-        </div>
-        <div id="vehicles-cov-container"></div>
-      </div>
-
-      <div class="section-divider"><span>Additional Questions</span></div>
-      <div class="gate-card">
-        <div class="gate-question">
+      <!-- LIAB: Bodily Injury / Property Damage -->
+      <div class="micro-screen hidden" data-micro-step="auto-coverage:LIAB">
+        <div class="section-divider"><span>Liability</span></div>
+        <div class="field-grid">
           <div class="field">
-            <label>SR-22 Required?</label>
-            <select id="auto-sr22" onchange="handleSR22()">
+            <label>Bodily Injury Liability <span class="req">*</span></label>
+            <select id="auto-bi">
+              <option value="">-- Select --</option>
+              <option>25/50</option><option>50/100</option><option>100/300</option>
+              <option>250/500</option><option>500/500</option><option>1000/1000</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Property Damage Liability <span class="req">*</span></label>
+            <select id="auto-pd">
+              <option value="">-- Select --</option>
+              <option>$25,000</option><option>$50,000</option><option>$100,000</option>
+              <option>$250,000</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- UMUIM: Uninsured / Underinsured Motorist -->
+      <div class="micro-screen hidden" data-micro-step="auto-coverage:UMUIM">
+        <div class="section-divider"><span>Uninsured / Underinsured Motorist</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Uninsured Motorist BI <span class="req">*</span> <span class="flag">⚡ MO required</span></label>
+            <select id="auto-umbi">
+              <option value="25/50">25/50</option>
+              <option value="50/100">50/100</option>
+              <option value="100/300">100/300</option>
+              <option value="250/500">250/500</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Underinsured Motorist BI <span class="flag">⚡ optional — must offer</span></label>
+            <select id="auto-uimbi">
+              <option value="">-- None --</option>
+              <option value="25/50">25/50</option>
+              <option value="50/100">50/100</option>
+              <option value="100/300">100/300</option>
+              <option value="250/500">250/500</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADDL: MedPay / Roadside / Rental -->
+      <div class="micro-screen hidden" data-micro-step="auto-coverage:ADDL">
+        <div class="section-divider"><span>Additional Coverage</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Medical Payments</label>
+            <select id="auto-medpay">
+              <option value="">-- None --</option>
+              <option>$1,000</option><option>$2,000</option><option>$5,000</option><option>$10,000</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Roadside Assistance</label>
+            <select id="auto-roadside">
+              <option value="">-- None --</option>
+              <option>Basic</option><option>Enhanced</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Rental Reimbursement</label>
+            <select id="auto-rental">
+              <option value="">-- None --</option>
+              <option>$30/day - $900 max</option>
+              <option>$40/day - $1,200 max</option>
+              <option>$50/day - $1,500 max</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SR22: Yes/No auto-advance gate; Yes reveals reason in-place and
+           waits for the panel's normal Continue button -->
+      <div class="micro-screen hidden" data-micro-step="auto-coverage:SR22">
+        <div class="section-divider"><span>SR-22</span></div>
+        <div class="gate-card">
+          <div class="gate-question">
+            <div class="field">
+              <label>SR-22 Required?</label>
+              <div class="yn-btn-group">
+                <button type="button" class="yn-btn" id="auto-sr22-yes" onclick="selectSR22Gate('Yes')">Yes</button>
+                <button type="button" class="yn-btn" id="auto-sr22-no" onclick="selectSR22Gate('No')">No</button>
+              </div>
+              <input type="hidden" id="auto-sr22" value="No">
+            </div>
+          </div>
+          <div class="gate-panel hidden" id="sr22-panel">
+            <div class="gate-panel-inner">
+              <div class="field">
+                <label>SR-22 Reason</label>
+                <select id="auto-sr22-reason">
+                  <option>DUI/DWI</option><option>Suspended License</option>
+                  <option>Uninsured Accident</option><option>Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="sr22-alert" class="alert alert-warn hidden" style="margin-top:12px">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>SR-22 Required</strong> Filing required. Confirm carrier files in this state. Rate will be affected.</div>
+        </div>
+      </div>
+
+      <!-- FINAL: Rideshare / Business Use / Excluded Drivers / Telematics -->
+      <div class="micro-screen hidden" data-micro-step="auto-coverage:FINAL">
+        <div class="section-divider"><span>Additional Questions</span></div>
+        <div class="field-grid">
+          <div class="field">
+            <label>Rideshare (Uber/Lyft)?</label>
+            <select id="auto-rideshare" onchange="checkRideshare()">
+              <option value="No">No</option><option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Business Use of Vehicle?</label>
+            <select id="auto-business-use">
+              <option value="No">No</option><option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Any Excluded Drivers?</label>
+            <select id="auto-excluded">
+              <option value="No">No</option><option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Telematics / Usage-Based?</label>
+            <select id="auto-telematics">
               <option value="No">No</option><option value="Yes">Yes</option>
             </select>
           </div>
         </div>
-        <div class="gate-panel hidden" id="sr22-panel">
-          <div class="gate-panel-inner">
-            <div class="field">
-              <label>SR-22 Reason</label>
-              <select id="auto-sr22-reason">
-                <option>DUI/DWI</option><option>Suspended License</option>
-                <option>Uninsured Accident</option><option>Other</option>
-              </select>
-            </div>
-          </div>
+        <div id="rideshare-alert" class="alert alert-warn hidden">
+          <div class="alert-icon">⚠️</div>
+          <div><strong>Rideshare Use Flagged</strong> Verify carrier accepts rideshare endorsement. Not all markets cover TNC drivers.</div>
         </div>
-      </div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Rideshare (Uber/Lyft)?</label>
-          <select id="auto-rideshare" onchange="checkRideshare()">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Business Use of Vehicle?</label>
-          <select id="auto-business-use">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Any Excluded Drivers?</label>
-          <select id="auto-excluded">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Telematics / Usage-Based?</label>
-          <select id="auto-telematics">
-            <option value="No">No</option><option value="Yes">Yes</option>
-          </select>
-        </div>
-      </div>
-      <div id="rideshare-alert" class="alert alert-warn hidden">
-        <div class="alert-icon">⚠️</div>
-        <div><strong>Rideshare Use Flagged</strong> Verify carrier accepts rideshare endorsement. Not all markets cover TNC drivers.</div>
-      </div>
-      <div id="sr22-alert" class="alert alert-warn hidden">
-        <div class="alert-icon">⚠️</div>
-        <div><strong>SR-22 Required</strong> Filing required. Confirm carrier files in this state. Rate will be affected.</div>
       </div>
     </div>
     <div class="btn-row">

@@ -1,5 +1,5 @@
 // js/state.js
-// Version 1.6.0 — 2026-07-15
+// Version 1.7.0 — 2026-07-17
 
 
 // ══════════════════════════════════════════
@@ -55,23 +55,32 @@ function microOf(key) {
   return key && key.includes(':') ? key.split(':')[1] : null;
 }
 
-// ── Main progress-bar checkpoint (No-Scroll Refactor — Stage 1 follow-up) ──
-// The household-member loop (applicant:A6a-n / applicant:A6b-n) splices new
-// step keys into state.steps every time a member is added, which would
-// otherwise make the main progress bar lurch forward through each member's
-// screens and then jump backward when the loop returns to the gate. This
-// computes position/total against a "checkpoint" list with every loop
-// iteration collapsed out entirely — mirrors how buildStepNav() already
-// collapses the whole Applicant macro into a single pill, one level
-// deeper (collapsing just the loop, not the whole macro). While the
-// person is anywhere inside the loop, position is pinned to the gate's
-// single slot, so the bar holds still until "No" is chosen and A7 (or
-// whatever follows) is reached.
+// ── Main progress-bar checkpoint (No-Scroll Refactor — Stage 1 follow-up,
+// generalized in Stage 2 for the auto-vehicles loop) ──
+// Loop macros (household members, vehicles) splice new step keys into
+// state.steps every time an item is added, which would otherwise make the
+// main progress bar lurch forward through each item's screens and then
+// jump backward when the loop returns to its gate. This computes
+// position/total against a "checkpoint" list with every loop iteration
+// collapsed out entirely — mirrors how buildStepNav() already collapses
+// each macro into a single pill, one level deeper (collapsing just the
+// loop, not the whole macro). While the person is anywhere inside a loop,
+// position is pinned to that loop's gate slot, so the bar holds still
+// until the loop is exited and the next screen is reached.
+function isLoopStep(key) {
+  return /^applicant:A6[ab]-/.test(key) ||
+         /^auto-vehicles:V\d+-(info|usage|ownership|physdmg)$/.test(key);
+}
+
 function getProgressCheckpoint() {
-  const checkpointSteps = state.steps.filter(s => !/^applicant:A6[ab]-/.test(s));
+  const checkpointSteps = state.steps.filter(s => !isLoopStep(s));
   const currentKey = state.steps[state.currentStepIndex];
-  const isInLoop = /^applicant:A6[ab]-/.test(currentKey);
-  const effectiveKey = isInLoop ? 'applicant:A6' : currentKey;
+  let effectiveKey = currentKey;
+  if (/^applicant:A6[ab]-/.test(currentKey)) {
+    effectiveKey = 'applicant:A6';
+  } else if (/^auto-vehicles:V\d+-(info|usage|ownership|physdmg)$/.test(currentKey)) {
+    effectiveKey = 'auto-vehicles:VGATE';
+  }
   const position = checkpointSteps.indexOf(effectiveKey);
   return { position: position === -1 ? 0 : position, total: checkpointSteps.length };
 }
@@ -246,7 +255,12 @@ function startIntake() {
   const steps = [];
   lobs.forEach(lob => {
     if (lob === 'auto') {
-      steps.push('auto-vehicles', 'auto-coverage');
+      // Stage 2: auto-vehicles:VGATE must exist before addVehicle() runs
+      // below (it splices each vehicle's screens in relative to it), and
+      // auto-coverage:LIAB must exist as the fixed anchor addVehicle()
+      // splices new vehicles' screens before.
+      steps.push('auto-vehicles:VGATE', 'auto-coverage:LIAB', 'auto-coverage:UMUIM',
+                  'auto-coverage:ADDL', 'auto-coverage:SR22', 'auto-coverage:FINAL');
     } else if (lob === 'home') {
       steps.push('home-type', 'home-details', 'home-coverage');
     } else if (lob === 'life') {
@@ -261,9 +275,9 @@ function startIntake() {
   state.currentStepIndex = 0;
 
   // Reset repeater containers and counts before init
-  ['vehicles-container', 'vehicles-cov-container', 'hh-loop-container',
+  ['vehicles-loop-container', 'hh-loop-container',
    'medications-container', 'siding-materials-container', 'wall-materials-container',
-   'floor-materials-container'].forEach(id => {
+   'floor-materials-container', 'vehicles-summary'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
@@ -493,9 +507,25 @@ function renderStep() {
     applicantContinueBtn.classList.remove('hidden');
   }
 
-  // When entering auto coverage screen, rebuild physical damage blocks
-  if (macro === 'auto-coverage') {
-    refreshVehicleCovBlocks();
+  // Auto vehicles (Stage 2): dynamic per-vehicle screen titles, the
+  // Physical Damage screen's lender-required flag, and the VGATE gate's
+  // running summary + hiding the global Continue button while on it
+  // (same reasoning as the household gate — the Yes/No buttons drive
+  // their own navigation).
+  if (macro === 'auto-vehicles') {
+    const vMatch = microOf(key)?.match(/^V(\d+)-(info|usage|ownership|physdmg)$/);
+    if (vMatch) {
+      const n = vMatch[1];
+      updateVehicleScreenTitles(n);
+      if (vMatch[2] === 'physdmg') updateVehiclePhysDmgRequirement(n);
+    }
+  }
+  const vehicleContinueBtn = document.getElementById('auto-vehicles-continue-btn');
+  if (key === 'auto-vehicles:VGATE') {
+    refreshVehicleSummary();
+    if (vehicleContinueBtn) vehicleContinueBtn.classList.add('hidden');
+  } else if (vehicleContinueBtn) {
+    vehicleContinueBtn.classList.remove('hidden');
   }
 
   // When entering home-details, show/hide owner fields based on policy type
